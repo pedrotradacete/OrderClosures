@@ -1,0 +1,21 @@
+/.lake/
+
+# Lean editor and profiler output
+*.olean
+*.ilean
+*.trace
+
+# LaTeX build output
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.pdf
+*.synctex.gz
+
+# Editor and operating-system files
+.DS_Store
+*~
