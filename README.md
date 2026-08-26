@@ -24,9 +24,15 @@ directly builds the dependencies from source.
 ## Formalization layout
 
 - `OrderClosures/OrderAdherence.lean`: shared order-adherence definitions and lemmas.
-- `OrderClosures/GaoLeungProblem.lean`: the Gao--Leung counterexamples.
-- `OrderClosures/WeaklyFatou.lean`: the counterexample for weakly Fatou norms.
+- `OrderClosures/GaoLeungProblem.lean`: compatibility umbrella for the
+  Gao--Leung development. Its paper-ordered implementation is split into
+  `Counterexample`, `CNFOrder`, `OrdinalSpace`, `StageFormula`, and
+  `Iterations` under `OrderClosures/GaoLeungProblem/`.
+- `OrderClosures/WeaklyFatou.lean`: compatibility umbrella for the weakly
+  Fatou construction. Its paper-ordered implementation is split into
+  `Reductions`, `FiniteTree`, `TreeNorm`, `Bands`, `Moderated`, and
+  `FinalSpace` under `OrderClosures/WeaklyFatou/`.
 - `OrderClosures.lean`: the root import for the complete development.
 
-The Lean files currently provide the checked project scaffold; theorem statements and
-proofs will be added incrementally following the order of the paper.
+The project contains checked proofs of the formalized results and follows the
+presentation order of the paper.

@@ -3,8 +3,30 @@
 The completed Phase II scope comprises `OrderClosures/OrderAdherence.lean`,
 `OrderClosures/GaoLeungProblem.lean`, and `OrderClosures/WeaklyFatou.lean`.
 All 25 original obligations associated with the first two files have genuine
-proofs, and all 73 literal placeholders in `WeaklyFatou.lean` (spread across
-43 declarations and structure fields) have also been replaced by proofs.
+proofs, and all 73 literal placeholders from the original
+`WeaklyFatou.lean` (spread across 43 declarations and structure fields) have
+also been replaced by proofs.
+
+## Paper-ordered module layout
+
+The two largest implementation files have been split while preserving their
+original import paths as compatibility umbrellas. Every implementation module
+has between 400 and 1000 lines:
+
+- `GaoLeungProblem/Counterexample.lean` (counterexample and cardinal bounds),
+  `CNFOrder.lean` (the Cantor-normal-form extension order),
+  `OrdinalSpace.lean` (compact ordinal space and coordinate projections),
+  `StageFormula.lean` (one-step and transfinite adherence formulas), and
+  `Iterations.lean` (the product construction and final iteration theorems);
+- `WeaklyFatou/Reductions.lean` (abstract reductions), `FiniteTree.lean`
+  (tree topology and parent-disjointness), `TreeNorm.lean` (the seminorm and
+  component lattice), `Bands.lean` (band projections, upshift, and trimming),
+  `Moderated.lean` (thinning, transientness, and moderatedness), and
+  `FinalSpace.lean` (component adherence and the final `c₀`-sum).
+
+Declarations retain their paper order apart from the namespace/import
+boundaries required by Lean. The former top-level modules import these files
+in order, so downstream imports require no changes.
 
 ## Weakly Fatou completion
 
@@ -172,8 +194,9 @@ can otherwise have the root as their common parent. The calls from
   placeholder warnings.
 - `lake env lean OrderClosures/WeaklyFatou.lean`: succeeds without warnings or
   placeholders.
-- `lake build OrderClosures.GaoLeungProblem`: succeeds (3348 jobs).
-- `lake build`: succeeds (3351 jobs).
+- `lake build OrderClosures.GaoLeungProblem`: succeeds (3353 jobs).
+- `lake build OrderClosures.WeaklyFatou`: succeeds (3317 jobs).
+- `lake build`: succeeds (3362 jobs).
 - `rg -n '\b(sorry|admit)\b|sorryAx' --glob '*.lean' .`: no matches in the
   project Lean sources.
 - `#print axioms` on `ordinalProjection_chain_iSup`,
