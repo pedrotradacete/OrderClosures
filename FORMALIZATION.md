@@ -1,4 +1,194 @@
-# Phase I formalization report
+# Phase II proof status (2026-08-26)
+
+The completed Phase II scope comprises `OrderClosures/OrderAdherence.lean`,
+`OrderClosures/GaoLeungProblem.lean`, and `OrderClosures/WeaklyFatou.lean`.
+All 25 original obligations associated with the first two files have genuine
+proofs, and all 73 literal placeholders in `WeaklyFatou.lean` (spread across
+43 declarations and structure fields) have also been replaced by proofs.
+
+## Weakly Fatou completion
+
+The formalization now proves the paper's entire tree construction and final
+`c₀`-sum argument. The completed groups are:
+
+- the order-adherence, scaling, Fatou, and sequential-to-net reductions;
+- the finite-tree topology, cylinder partitions, parent-disjointness, and
+  weighted tree seminorm estimates;
+- the component vector-lattice and normed-lattice structures, including
+  completeness, separability, the exact basis computation, and the root
+  vector estimates;
+- the sharp-subsequence, trimming, thinning, transient-band, moderatedness,
+  and weak-Fatou arguments;
+- the component adherence construction and the final `c₀`-sum lattice norm;
+- completeness and weak Fatou for the final space, the large-coordinate
+  witnesses, and the proof that no equivalent Fatou lattice norm exists.
+
+The principal supporting definitions and lemmas added for these proofs are
+the generic implications `weakNakano_of_weakSequentialNakano_p` and
+`weakFatou_of_weakNakano_p`; the band partition API around `treeBandOfNode`,
+`treeBandParent`, `bandsAt`, and finite band projections; the nonnegative tree
+operator and weighted-`ρ` inequalities; the finite parent-support argument
+for upshifted coefficients; `treeOperator_mem_treeSublattice`; and the final
+single-coordinate embedding, including preservation of order convergence and
+iterated order adherence.
+
+## Completed obligations
+
+- `orderAdherence_eq_solidOrderAdherence`
+- `subset_orderAdherence`
+- `orderAdherence_mono`
+- `subset_uoAdherence`
+- `OrderConvergesTo.uoConvergesTo`
+- `orderAdherence_subset_uoAdherence_subset`
+- `uoAdherence_eq_orderClosure_of_isOrderClosed`
+- `uoAdherence_eq_double_orderAdherence_and_stabilizes`
+- `isSolid_orderAdherence`
+- `solidHull_eq_iUnion_Icc`
+- `orderAdherence_cardinality_bound`
+- `signedPositiveSubsetSuprema_isOrderClosed`
+- `solid_orderAdherence_cardinality_bound`
+- the continuity field of `ordinalProjection`
+- `exists_solid_large_orderAdherence`
+- `cnfExtensionLE_partialOrder_and_subrelation`
+- `cnfExtensionLT_linear_above`
+- `ordinalProjection_incomparable_iInf`
+- `ordinalProjection_strict_stage`
+- `solid_generated_orderAdherence`
+- `gao_counterexample`
+- `gaoLeung_orderContinuous_characterization`
+- `ordinalProjection_chain_iSup`
+- `gao_orderAdherence_stage_formula`
+- `solid_sets_require_arbitrarily_many_iterations`
+
+The principal local helpers are the domination lemma for order-convergent
+nets, the order convergence of lattice clamps under uo-convergence, the
+order-closedness of `positiveSubsetSuprema`, and the injective encodings used
+for the two cardinal estimates. The ordinal development additionally uses a
+list model of the CNF extension relation (`CNFStep`, `CNFListLT`, and
+`cnfValue`), proves its transitivity and upper-cone trichotomy, extracts finite
+coordinate neighborhoods in the Cantor cube, and characterizes domination of
+coordinate projections by CNF extension. The proofs reuse BanLat's
+`OrderConvergesTo` algebra/continuity API and Mathlib's solid-closure,
+cardinal-powerset, continuous-evaluation, and ordinal interfaces. The
+previously requested bridge
+`conditionallyCompleteLatticeOfIsOrderComplete` remains in
+`OrderAdherence.lean`.
+
+For Claim 2, the formalization develops the missing Cantor-normal-form
+machinery needed to show that the ordinary ordinal supremum of a nonempty
+`cnfExtensionLE`-chain remains above every chain member. The principal helpers
+are `cnfExtensionLE_chain_lub`, the singleton-CNF lemmas, and
+`leastCNFExponent_chain_lub_le`.
+
+For Claim 3, finite minimal dominators are extracted from each directed
+positive family, coherently followed along a cofinal tail, and replaced by
+their chain supremum. The reverse inclusion uses the explicit
+`singletonCNFBelow` approximation. These arguments yield the one-step formula
+`orderAdherence_gaoStage` and then the transfinite formula by ordinal limit
+recursion.
+
+The endpoint `ξ = κ⁺` is handled by one dependent product containing every
+smaller Gao component. A κ-indexed diagonal family generates the global solid
+set. Coordinate projection and single-coordinate inclusion preserve order
+convergence, so each component transfers its strict stage to the global tower.
+An auxiliary padding coordinate makes the diagonal generators irredundant and
+proves the stronger exact equality of the solid generator number with κ.
+
+The new module `OrderClosures/Solovay.lean` formalizes Solovay's proof of the
+Gaifman--Hales theorem for the required complete Boolean algebra of regular
+open sets. It also constructs its compact Hausdorff Stone spectrum, proves
+that the spectrum is extremally disconnected, proves order completeness of
+its real continuous-function lattice, embeds the Boolean algebra as clopen
+indicators, establishes the density-character bound, and constructs the
+closed separable vector sublattice used by `gao_counterexample`.
+
+The new module `OrderClosures/GaoLeungCharacterization.lean` gives a genuine
+proof of Gao--Leung Theorem 2.7.  It formalizes the cycle `(3) → (1) → (2) →
+(3)`.  The reverse implication uses the standard disjoint-sequence criterion
+for failure of order continuity, constructs the corresponding lattice
+embedding of bounded functions on `ℕ × ℕ`, and uses the row-limit sublattice
+to exhibit a point in uo-adherence but not in order adherence.  The theorem's
+typeclass binder was also made coherent: `SigmaConditionallyCompleteLattice X`
+now supplies the unique lattice structure, rather than coexisting with a
+second, potentially different, explicit `Lattice X` instance.  This changes
+no intended mathematical hypothesis.
+
+## Phase-I statement corrections
+
+The declaration `solid_sets_require_arbitrarily_many_iterations` permits
+`κ = 0` and `ξ = 1`. Its hypothesis then holds because Lean simplifies
+
+```lean
+(1 : Ordinal) ≤ Cardinal.ord (Order.succ (0 : Cardinal))
+```
+
+to a true proposition, but its conclusion is false. A checked Lean
+counterproof establishes:
+
+1. for a solid set `S`, `solidGeneratorNumber S = 0` forces `S = ∅` (using
+   `Cardinal.sInf_eq_zero_iff` and `Cardinal.mk_set_eq_zero_iff`);
+2. `orderAdherence (∅ : Set X) = ∅`;
+3. consequently `NeedsOrderAdherenceIterations (∅ : Set X) 1` is false.
+
+Thus the current theorem would contradict a proof using only standard Lean
+foundations. The paper's construction is an infinite-cardinal construction;
+the statement has therefore been corrected, with the user's authorization, by
+adding the hypothesis `Cardinal.aleph0 ≤ κ`.
+
+Two further minimal corrections were required while completing the proof.
+First, the paper proves that every adherence stage below `ξ` is proper; it
+does not prove that the stage at `ξ` is already order closed (in particular,
+the endpoint product argument only supplies a lower bound). Accordingly,
+`NeedsOrderAdherenceIterations A ξ` now expresses exactly this “at least ξ
+iterations” property and no longer adds terminal closedness. Second,
+`GaoCompactSpace ξ` and its continuous-function lattice live in `Type (u+1)`
+when `ξ : Ordinal.{u}`. The final theorem's witness universe, generator
+cardinal, and ordinal were therefore lifted by one universe. These are
+logical/universe corrections only; the mathematical claim is unchanged.
+
+Two hypotheses implicit in the paper's setup were also restored in the tree
+lemmas. The trimming lemma `tree_trim` now assumes that its coefficient
+vectors are nonnegative and that the sequence is already *sharp*, meaning
+that the `ρ`-mass of every band converges. In the paper the vectors lie in the
+positive cone and a sharp subsequence is selected immediately before the
+trimming lemma. Without the sharpness hypothesis, mass may rotate through
+infinitely many bands and the former Lean statement is false. The transient
+lemma `tree_transient` now assumes that the selected finite family of
+persistent bands contains the root band. This is also how the family is
+chosen in the paper and is needed because nodes in distinct non-root bands
+can otherwise have the root as their common parent. The calls from
+`component_moderated` supply both restored hypotheses.
+
+## Validation
+
+- Lean: `leanprover/lean4:v4.30.0`.
+- Mathlib: `c5ea00351c28e24afc9f0f84379aa41082b1188f`.
+- BanLat: `b00e59836016aa1099b8011add6b07385e66428e`.
+- `lake env lean OrderClosures/OrderAdherence.lean`: succeeds with no
+  placeholder warnings.
+- `lake env lean OrderClosures/GaoLeungCharacterization.lean`: succeeds with no
+  placeholder warnings.
+- `lake env lean OrderClosures/GaoLeungProblem.lean`: succeeds with no
+  placeholder warnings.
+- `lake env lean OrderClosures/WeaklyFatou.lean`: succeeds without warnings or
+  placeholders.
+- `lake build OrderClosures.GaoLeungProblem`: succeeds (3348 jobs).
+- `lake build`: succeeds (3351 jobs).
+- `rg -n '\b(sorry|admit)\b|sorryAx' --glob '*.lean' .`: no matches in the
+  project Lean sources.
+- `#print axioms` on `ordinalProjection_chain_iSup`,
+  `gao_orderAdherence_stage_formula`, and
+  `solid_sets_require_arbitrarily_many_iterations` reports only `propext`,
+  `Classical.choice`, and `Quot.sound`; none depends on `sorryAx` or a custom
+  project axiom.
+- `#print axioms` on `tree_trim`, `tree_transient`, `component_moderated`,
+  `component_weakFatou`, `finalSpace_weakFatou`,
+  `finalLargeVector_properties`, `finalSpace_not_equivalent_fatou`, and
+  `exists_weaklyFatou_not_equivalent_fatou` likewise reports only `propext`,
+  `Classical.choice`, and `Quot.sound`.
+- `git diff --check`: succeeds.
+
+# Historical Phase I formalization report
 
 This report covers the whole mathematical scope of `paper.tex`. Phase I is an
 interface pass: mathematical data is implemented, every paper result is stated,
@@ -25,22 +215,22 @@ a definition, in which case their non-proof data is implemented.
 | Paper item | Lean declaration(s) | File |
 |---|---|---|
 | Definitions of order convergence, uo-convergence, adherence, closure, and closedness | BanLat `OrderConvergesTo`; `UOConvergesTo`, `orderAdherence`, `uoAdherence`, `orderClosure`, `IsOrderClosed`, `IsUOClosed` | `OrderAdherence.lean` |
-| Theorem `ND` (Gao--Leung Theorem 2.7) | `gaoLeung_orderContinuous_characterization` | `GaoLeung.lean` |
+| Theorem `ND` (Gao--Leung Theorem 2.7) | `gaoLeung_orderContinuous_characterization` | `GaoLeungCharacterization.lean` |
 | Gao--Leung Lemma 2.1 and its consequences | `orderAdherence_subset_uoAdherence_subset`, `uoAdherence_eq_orderClosure_of_isOrderClosed`, `uoAdherence_eq_double_orderAdherence_and_stabilizes` | `OrderAdherence.lean` |
-| Gao--Leung Problem 2.5 | `GaoLeungProperty` | `GaoLeung.lean` |
+| Gao--Leung Problem 2.5 | `GaoLeungProperty` | `GaoLeungProblem.lean` |
 | Fatou and weak Fatou definitions | `HasFatouProperty`, `HasWeakFatouProperty` | `OrderAdherence.lean` |
 | Fremlin Problem AB | `FremlinProperty` | `WeaklyFatou.lean` |
-| Proposition `prop:gao-counterexample` | `gao_counterexample` | `GaoLeung.lean` |
-| Remark `rem:gao-cardinality` | `orderAdherence_cardinality_bound` | `GaoLeung.lean` |
+| Proposition `prop:gao-counterexample` | `gao_counterexample` and its Solovay/Stone helpers | `GaoLeungProblem.lean`, `Solovay.lean` |
+| Remark `rem:gao-cardinality` | `orderAdherence_cardinality_bound` | `GaoLeungProblem.lean` |
 | Solid order-adherence definition and finite iteration | `directedPositiveAdherence`, `solidOrderAdherence`, `iteratedOrderAdherence`, `orderAdherence_eq_solidOrderAdherence` | `OrderAdherence.lean` |
 | Solid hull and `solidgen` | `solidHull`, `solidHull_eq_iUnion_Icc`, `solidGeneratorNumber` | `OrderAdherence.lean` |
-| Proposition `prop:solid-large-order-closure` | `exists_solid_large_orderAdherence` | `GaoLeung.lean` |
-| Proposition `prop:cardinalitybound` | `positiveSubsetSuprema`, `signedPositiveSubsetSuprema`, `signedPositiveSubsetSuprema_isOrderClosed`, `solid_orderAdherence_cardinality_bound` | `GaoLeung.lean` |
-| Theorem `thm:solid-iterations` | `OrderAdherenceTower`, `NeedsOrderAdherenceIterations`, `solid_sets_require_arbitrarily_many_iterations` | `OrderAdherence.lean`, `GaoLeung.lean` |
-| Cantor-normal-form relation and P1/P2 in that proof | `cnfExtensionLT`, `cnfExtensionLE`, `cnfExtensionLE_partialOrder_and_subrelation`, `cnfExtensionLT_linear_above` | `GaoLeung.lean` |
-| Compact ordinal space, projections, `Z_β`, and `S_β` | `GaoIndex`, `GaoCompactSpace`, `ordinalProjection`, `leastCNFExponent`, `GaoStageIndices`, `GaoStageSet` | `GaoLeung.lean` |
-| Claims 1--3 and strict-stage witness | `ordinalProjection_incomparable_iInf`, `ordinalProjection_chain_iSup`, `gao_orderAdherence_stage_formula`, `ordinalProjection_strict_stage` | `GaoLeung.lean` |
-| Lemma `lem:solid-generated-order-adh` | `solid_generated_orderAdherence` | `GaoLeung.lean` |
+| Proposition `prop:solid-large-order-closure` | `exists_solid_large_orderAdherence` | `GaoLeungProblem.lean` |
+| Proposition `prop:cardinalitybound` | `positiveSubsetSuprema`, `signedPositiveSubsetSuprema`, `signedPositiveSubsetSuprema_isOrderClosed`, `solid_orderAdherence_cardinality_bound` | `GaoLeungProblem.lean` |
+| Theorem `thm:solid-iterations` | `OrderAdherenceTower`, `NeedsOrderAdherenceIterations`, `solid_sets_require_arbitrarily_many_iterations` | `OrderAdherence.lean`, `GaoLeungProblem.lean` |
+| Cantor-normal-form relation and P1/P2 in that proof | `cnfExtensionLT`, `cnfExtensionLE`, `cnfExtensionLE_partialOrder_and_subrelation`, `cnfExtensionLT_linear_above` | `GaoLeungProblem.lean` |
+| Compact ordinal space, projections, `Z_β`, and `S_β` | `GaoIndex`, `GaoCompactSpace`, `ordinalProjection`, `leastCNFExponent`, `GaoStageIndices`, `GaoStageSet` | `GaoLeungProblem.lean` |
+| Claims 1--3 and strict-stage witness | `ordinalProjection_incomparable_iInf`, `ordinalProjection_chain_iSup`, `gao_orderAdherence_stage_formula`, `ordinalProjection_strict_stage` | `GaoLeungProblem.lean` |
+| Lemma `lem:solid-generated-order-adh` | `solid_generated_orderAdherence` | `GaoLeungProblem.lean` |
 | Theorem `thm:fremlin-main` | `exists_weaklyFatou_not_equivalent_fatou`; concrete witness theorem `finalSpace_not_equivalent_fatou` | `WeaklyFatou.lean` |
 | Lemma `lem:order-basic` | `iteratedOrderAdherence_mono_and_scale` | `WeaklyFatou.lean` |
 | Lemma `lem:fatou-order` | `weakFatou_iterated_unitBall`, `fatou_iterated_unitBall` | `WeaklyFatou.lean` |
@@ -173,7 +363,7 @@ in those declarations is explicit.
   `uoAdherence_eq_double_orderAdherence_and_stabilizes`,
   `isSolid_orderAdherence`, `solidHull_eq_iUnion_Icc`.
 
-### `OrderClosures/GaoLeung.lean` — 15
+### `OrderClosures/GaoLeungProblem.lean` — 15
 
 - One each: `gaoLeung_orderContinuous_characterization`, `gao_counterexample`,
   `orderAdherence_cardinality_bound`, `exists_solid_large_orderAdherence`,

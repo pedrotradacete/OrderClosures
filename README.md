@@ -24,7 +24,7 @@ directly builds the dependencies from source.
 ## Formalization layout
 
 - `OrderClosures/OrderAdherence.lean`: shared order-adherence definitions and lemmas.
-- `OrderClosures/GaoLeung.lean`: the Gao--Leung counterexamples.
+- `OrderClosures/GaoLeungProblem.lean`: the Gao--Leung counterexamples.
 - `OrderClosures/WeaklyFatou.lean`: the counterexample for weakly Fatou norms.
 - `OrderClosures.lean`: the root import for the complete development.
 

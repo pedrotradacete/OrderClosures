@@ -67,46 +67,228 @@ structure OrderAdherenceTower (A : Set X) where
   stage_limit : ∀ ξ, Order.IsSuccLimit ξ →
     stage ξ = ⋃ η : Set.Iio ξ, stage η.1
 
-/-- Exactly `ξ` stages are needed when all earlier stages are proper and stage `ξ` is closed. -/
+/-- At least `ξ` stages are needed when every earlier adherence step is proper. -/
 def NeedsOrderAdherenceIterations (A : Set X) (ξ : Ordinal.{u}) : Prop :=
   ∃ T : OrderAdherenceTower A,
-    (∀ η < ξ, T.stage η ⊂ T.stage (Order.succ η)) ∧ IsOrderClosed (T.stage ξ)
+    ∀ η < ξ, T.stage η ⊂ T.stage (Order.succ η)
 
+omit [VectorLattice X] in
 /-- The generic net definition and the directed-positive definition agree for solid sets. -/
 theorem orderAdherence_eq_solidOrderAdherence {A : Set X}
     (hA : LatticeOrderedAddCommGroup.IsSolid A) :
     orderAdherence A = solidOrderAdherence A := by
-  sorry
+  ext x
+  constructor
+  · rintro ⟨ι, hpre, hdir, hne, f, hfA, hf⟩
+    letI : Preorder ι := hpre
+    letI : IsDirected ι (· ≤ ·) := hdir
+    letI : Nonempty ι := hne
+    rcases hf with ⟨κ, hκpre, hκdir, hκne, r, hranti, hrnonneg, hrglb, hbound⟩
+    letI : Preorder κ := hκpre
+    letI : IsDirected κ (· ≤ ·) := hκdir
+    letI : Nonempty κ := hκne
+    let y : κ → X := fun k ↦ (|x| - r k)⁺
+    have hy_mono : Monotone y := by
+      intro k l hkl
+      exact posPart_mono (sub_le_sub_left (hranti hkl) |x|)
+    have hy_mem : ∀ k, y k ∈ A := by
+      intro k
+      obtain ⟨i, hi⟩ := (hbound k).exists
+      have hx_le : |x| ≤ |f i| + r k := by
+        calc
+          |x| = |(x - f i) + f i| := by congr 1; abel
+          _ ≤ |x - f i| + |f i| := abs_add_le _ _
+          _ = |f i| + |x - f i| := add_comm _ _
+          _ ≤ |f i| + r k := add_le_add_right (by simpa [abs_sub_comm] using hi) _
+      have hsub : |x| - r k ≤ |f i| := sub_le_iff_le_add.mpr hx_le
+      have hy_le : y k ≤ |f i| :=
+        show (|x| - r k) ⊔ 0 ≤ |f i| from sup_le hsub (abs_nonneg _)
+      exact hA (hfA i) (by simpa [y, abs_of_nonneg (posPart_nonneg _)] using hy_le)
+    have hy_lub : IsLUB (Set.range y) |x| := by
+      refine ⟨?_, ?_⟩
+      · rintro _ ⟨k, rfl⟩
+        exact show (|x| - r k) ⊔ 0 ≤ |x| from
+          sup_le (sub_le_self _ (hrnonneg k)) (abs_nonneg _)
+      · intro c hc
+        have hlow : |x| - c ∈ lowerBounds (Set.range r) := by
+          rintro _ ⟨k, rfl⟩
+          have hraw : |x| - r k ≤ c := (le_posPart _).trans (hc ⟨k, rfl⟩)
+          exact sub_le_iff_le_add.mpr (by
+            simpa [add_comm] using (sub_le_iff_le_add.mp hraw))
+        exact sub_nonpos.mp (hrglb.2 hlow)
+    refine ⟨|x|, ?_, ?_⟩
+    · refine ⟨abs_nonneg x, Set.range y, ?_, ?_, ?_, hy_lub⟩
+      · rintro _ ⟨k, rfl⟩
+        exact ⟨hy_mem k, posPart_nonneg _⟩
+      · exact Set.range_nonempty y
+      · rintro _ ⟨k, rfl⟩ _ ⟨l, rfl⟩
+        obtain ⟨m, hkm, hlm⟩ := directed_of (· ≤ ·) k l
+        exact ⟨y m, ⟨m, rfl⟩, hy_mono hkm, hy_mono hlm⟩
+    · simp
+  · rintro ⟨z, hz, hxz⟩
+    rcases hz with ⟨hz, B, hBA, hBne, hBdir, hBlub⟩
+    have hxz' : |x| ≤ z := by simpa [abs_of_nonneg hz] using hxz
+    letI : Nonempty B := hBne.to_subtype
+    letI : IsDirectedOrder B := hBdir.isDirectedOrder
+    let b : B → X := fun w ↦ w.1
+    have hb_mono : Monotone b := by
+      intro p q hpq
+      exact hpq
+    have hb_range : Set.range b = B := by
+      ext w
+      simp [b]
+    have hb_order : OrderConvergesTo b z :=
+      orderConvergesTo_of_monotone_isLUB hb_mono (by simpa [hb_range] using hBlub)
+    let g : B → X := fun w ↦ (x ⊓ b w) ⊔ (-b w)
+    have hg_mem : ∀ w, g w ∈ A := by
+      intro w
+      have hw := hBA w.2
+      have hg_upper : g w ≤ b w := by
+        exact sup_le inf_le_right ((neg_nonpos.mpr hw.2).trans hw.2)
+      have hg_lower : -g w ≤ b w := by
+        simpa using neg_le_neg (show -b w ≤ g w from le_sup_right)
+      have hg_abs : |g w| ≤ b w := (abs_le').2 ⟨hg_upper, hg_lower⟩
+      exact hA hw.1 (by simpa [b, abs_of_nonneg hw.2] using hg_abs)
+    have hxbounds : x ≤ z ∧ -x ≤ z := (abs_le').mp hxz'
+    have hnegzx : -z ≤ x := by simpa using neg_le_neg hxbounds.2
+    have hlim : x ⊓ z ⊔ -z = x := by
+      rw [inf_eq_left.mpr hxbounds.1, sup_eq_left.mpr hnegzx]
+    have hg_order : OrderConvergesTo g x := by
+      have h := ((orderConvergesTo_const (X := X) (ι := B) x).inf hb_order).sup hb_order.neg
+      simpa [g, hlim] using h
+    exact ⟨B, inferInstance, inferInstance, inferInstance, g, hg_mem, hg_order⟩
 
+omit [VectorLattice X] in
 /-- Order adherence is extensive. -/
 theorem subset_orderAdherence (A : Set X) : A ⊆ orderAdherence A := by
-  sorry
+  intro x hx
+  exact ⟨ULift.{u} PUnit, inferInstance, inferInstance, inferInstance,
+    fun _ ↦ x, fun _ ↦ hx, orderConvergesTo_const x⟩
 
+omit [IsOrderedAddMonoid X] [VectorLattice X] in
 /-- Order adherence is monotone. -/
 theorem orderAdherence_mono : Monotone (orderAdherence : Set X → Set X) := by
-  sorry
+  intro A B hAB x
+  rintro ⟨ι, hpre, hdir, hne, f, hf, hfx⟩
+  exact ⟨ι, hpre, hdir, hne, f, fun i ↦ hAB (hf i), hfx⟩
 
+omit [VectorLattice X] in
 /-- Uo-adherence is extensive. -/
 theorem subset_uoAdherence (A : Set X) : A ⊆ uoAdherence A := by
-  sorry
+  intro x hx
+  refine ⟨ULift.{u} PUnit, inferInstance, inferInstance, inferInstance,
+    fun _ ↦ x, fun _ ↦ hx, ?_⟩
+  intro a ha
+  simpa [inf_eq_left.mpr ha] using
+    (orderConvergesTo_const (ι := ULift.{u} PUnit) (0 : X))
 
+omit [VectorLattice X] in
 /-- Order convergence implies unbounded-order convergence. -/
 theorem OrderConvergesTo.uoConvergesTo {ι : Type v} [Preorder ι]
     [IsDirected ι (· ≤ ·)] [Nonempty ι] {f : ι → X} {x : X}
     (h : OrderConvergesTo f x) : UOConvergesTo f x := by
-  sorry
+  intro a ha
+  have hsub := h.sub (orderConvergesTo_const (ι := ι) x)
+  have hinf := hsub.abs.inf (orderConvergesTo_const (ι := ι) a)
+  simpa [inf_eq_left.mpr ha] using hinf
+
+omit [IsOrderedAddMonoid X] [VectorLattice X] in
+private theorem orderConvergesTo_zero_of_abs_le {ι : Type v} [Preorder ι]
+    {f g : ι → X} (hg : OrderConvergesTo g 0) (hfg : ∀ i, |f i| ≤ |g i|) :
+    OrderConvergesTo f 0 := by
+  rcases hg with ⟨κ, hpre, hdir, hne, r, hranti, hrnonneg, hrglb, hbound⟩
+  refine ⟨κ, hpre, hdir, hne, r, hranti, hrnonneg, hrglb, ?_⟩
+  intro k
+  exact (hbound k).mono fun i hi ↦ by
+    simpa using (hfg i).trans (by simpa using hi)
+
+omit [VectorLattice X] in
+private theorem abs_clamp_le (x a : X) (ha : 0 ≤ a) :
+    |(x ⊓ a) ⊔ (-a)| ≤ a := by
+  apply (abs_le').2
+  exact ⟨sup_le inf_le_right ((neg_nonpos.mpr ha).trans ha),
+    by simpa using neg_le_neg (show -a ≤ (x ⊓ a) ⊔ (-a) from le_sup_right)⟩
+
+omit [VectorLattice X] in
+private theorem UOConvergesTo.clamp {ι : Type v} [Preorder ι]
+    [IsDirected ι (· ≤ ·)] [Nonempty ι] {f : ι → X} {x : X}
+    (h : UOConvergesTo f x) (a : X) (ha : 0 ≤ a) :
+    OrderConvergesTo (fun i ↦ (f i ⊓ a) ⊔ (-a)) ((x ⊓ a) ⊔ (-a)) := by
+  let c : X := (x ⊓ a) ⊔ (-a)
+  let d : ι → X := fun i ↦ ((f i ⊓ a) ⊔ (-a)) - c
+  have ht := h (a + a) (add_nonneg ha ha)
+  have hd_bound : ∀ i, |d i| ≤ |(|f i - x| ⊓ (a + a))| := by
+    intro i
+    have hfirst : |d i| ≤ |f i - x| := by
+      exact (abs_sup_sub_sup_le_abs (f i ⊓ a) (x ⊓ a) (-a)).trans
+        (abs_inf_sub_inf_le_abs (f i) x a)
+    have hsecond : |d i| ≤ a + a := by
+      calc
+        |d i| = |((f i ⊓ a) ⊔ (-a)) + -((x ⊓ a) ⊔ (-a))| := by
+          simp [d, c, sub_eq_add_neg]
+        _ ≤ |(f i ⊓ a) ⊔ (-a)| + |(x ⊓ a) ⊔ (-a)| := by
+          simpa using abs_add_le ((f i ⊓ a) ⊔ (-a)) (-((x ⊓ a) ⊔ (-a)))
+        _ ≤ a + a := add_le_add (abs_clamp_le _ _ ha) (abs_clamp_le _ _ ha)
+    have ht_nonneg : 0 ≤ |f i - x| ⊓ (a + a) :=
+      le_inf (abs_nonneg _) (add_nonneg ha ha)
+    simpa [abs_of_nonneg ht_nonneg] using (le_inf hfirst hsecond)
+  have hd : OrderConvergesTo d 0 := orderConvergesTo_zero_of_abs_le ht hd_bound
+  have hsum := hd.add (orderConvergesTo_const (ι := ι) c)
+  simpa [d, c] using hsum
 
 /-- Gao--Leung, Lemma 2.1: the two adherences lie within two order-adherence steps. -/
 theorem orderAdherence_subset_uoAdherence_subset {Y : VectorSublattice X} :
     orderAdherence (Y : Set X) ⊆ uoAdherence (Y : Set X) ∧
       uoAdherence (Y : Set X) ⊆ orderAdherence (orderAdherence (Y : Set X)) := by
-  sorry
+  constructor
+  · rintro x ⟨ι, hpre, hdir, hne, f, hf, hfx⟩
+    letI : Preorder ι := hpre
+    letI : IsDirected ι (· ≤ ·) := hdir
+    letI : Nonempty ι := hne
+    exact ⟨ι, inferInstance, inferInstance, inferInstance, f, hf,
+      OrderConvergesTo.uoConvergesTo hfx⟩
+  · rintro x ⟨ι, hpre, hdir, hne, f, hf, hfx⟩
+    letI : Preorder ι := hpre
+    letI : IsDirected ι (· ≤ ·) := hdir
+    letI : Nonempty ι := hne
+    let g : ι → X := fun i ↦ (x ⊓ |f i|) ⊔ (-|f i|)
+    have hg_mem : ∀ i, g i ∈ orderAdherence (Y : Set X) := by
+      intro i
+      have hai : |f i| ∈ Y := Y.abs_mem (hf i)
+      refine ⟨ι, inferInstance, inferInstance, inferInstance,
+        fun j ↦ (f j ⊓ |f i|) ⊔ (-|f i|), ?_, ?_⟩
+      · intro j
+        exact Y.sup_mem (Y.inf_mem (hf j) hai) (Y.toSubmodule.neg_mem hai)
+      · exact hfx.clamp |f i| (abs_nonneg _)
+    have ht := hfx |x| (abs_nonneg x)
+    have hdiff : OrderConvergesTo (fun i ↦ g i - x) 0 := by
+      apply orderConvergesTo_zero_of_abs_le ht
+      intro i
+      dsimp [g]
+      llarith
+    have hg_order := hdiff.add (orderConvergesTo_const (ι := ι) x)
+    refine ⟨ι, inferInstance, inferInstance, inferInstance, g, hg_mem, ?_⟩
+    simpa [g] using hg_order
 
 /-- If the uo-adherence is order closed, it is the order closure. -/
 theorem uoAdherence_eq_orderClosure_of_isOrderClosed {Y : VectorSublattice X}
     (hY : IsOrderClosed (uoAdherence (Y : Set X))) :
     uoAdherence (Y : Set X) = orderClosure (Y : Set X) := by
-  sorry
+  apply Set.Subset.antisymm
+  · intro x hx
+    rw [orderClosure]
+    apply Set.mem_sInter.mpr
+    intro B hB
+    rcases hB with ⟨hYB, hBclosed⟩
+    have hadhYB : orderAdherence (Y : Set X) ⊆ B :=
+      fun _ hz ↦ hBclosed (orderAdherence_mono hYB hz)
+    have hdoubleYB : orderAdherence (orderAdherence (Y : Set X)) ⊆ B :=
+      fun _ hz ↦ hBclosed (orderAdherence_mono hadhYB hz)
+    exact hdoubleYB ((orderAdherence_subset_uoAdherence_subset (Y := Y)).2 hx)
+  · intro x hx
+    rw [orderClosure] at hx
+    exact Set.mem_sInter.mp hx (uoAdherence (Y : Set X))
+      ⟨subset_uoAdherence (Y : Set X), hY⟩
 
 /-- The remaining equalities and stabilization stated after Gao--Leung Lemma 2.1. -/
 theorem uoAdherence_eq_double_orderAdherence_and_stabilizes
@@ -114,13 +296,27 @@ theorem uoAdherence_eq_double_orderAdherence_and_stabilizes
     uoAdherence (Y : Set X) = orderAdherence (orderAdherence (Y : Set X)) ∧
       orderAdherence (orderAdherence (orderAdherence (Y : Set X))) =
         orderAdherence (orderAdherence (Y : Set X)) := by
-  sorry
+  have heq : uoAdherence (Y : Set X) =
+      orderAdherence (orderAdherence (Y : Set X)) := by
+    apply Set.Subset.antisymm
+    · exact (orderAdherence_subset_uoAdherence_subset (Y := Y)).2
+    · exact fun _ hx ↦ hY (orderAdherence_mono
+        (orderAdherence_subset_uoAdherence_subset (Y := Y)).1 hx)
+  refine ⟨heq, ?_⟩
+  calc
+    orderAdherence (orderAdherence (orderAdherence (Y : Set X))) =
+        orderAdherence (uoAdherence (Y : Set X)) := congrArg orderAdherence heq.symm
+    _ = uoAdherence (Y : Set X) := Set.Subset.antisymm hY
+      (subset_orderAdherence (uoAdherence (Y : Set X)))
+    _ = orderAdherence (orderAdherence (Y : Set X)) := heq
 
+omit [VectorLattice X] in
 /-- The order adherence of a solid set is solid. -/
 theorem isSolid_orderAdherence {A : Set X}
     (hA : LatticeOrderedAddCommGroup.IsSolid A) :
     LatticeOrderedAddCommGroup.IsSolid (orderAdherence A) := by
-  sorry
+  rw [orderAdherence_eq_solidOrderAdherence hA]
+  exact LatticeOrderedAddCommGroup.isSolid_solidClosure (directedPositiveAdherence A)
 
 end Convergence
 
@@ -135,7 +331,17 @@ abbrev solidHull (A : Set X) : Set X :=
 /-- The interval-union description of the solid hull used in the paper. -/
 theorem solidHull_eq_iUnion_Icc (A : Set X) :
     solidHull A = ⋃ a ∈ A, Set.Icc (-|a|) |a| := by
-  sorry
+  ext x
+  simp only [solidHull, LatticeOrderedAddCommGroup.solidClosure, Set.mem_setOf_eq,
+    Set.mem_iUnion, Set.mem_Icc]
+  constructor
+  · rintro ⟨a, ha, hxa⟩
+    have hx_bounds := (abs_le').mp hxa
+    refine ⟨a, ha, ?_, hx_bounds.1⟩
+    simpa using neg_le_neg hx_bounds.2
+  · rintro ⟨a, ha, hlow, hupp⟩
+    refine ⟨a, ha, (abs_le').2 ⟨hupp, ?_⟩⟩
+    simpa using neg_le_neg hlow
 
 /-- The least cardinality of a set whose solid hull is `S`. -/
 noncomputable def solidGeneratorNumber (S : Set X) : Cardinal :=
@@ -155,6 +361,14 @@ section CompletenessAndNorms
 /-- Order completeness, stated without installing a second lattice instance. -/
 def IsOrderComplete (X : Type u) [Preorder X] : Prop :=
   ∀ A : Set X, A.Nonempty → BddAbove A → ∃ x, IsLUB A x
+
+/-- Install BanLat's order-complete lattice structure locally from the paper's
+set-theoretic order-completeness predicate. -/
+@[reducible]
+noncomputable def conditionallyCompleteLatticeOfIsOrderComplete
+    (X : Type u) [AddCommGroup X] [Lattice X] [IsOrderedAddMonoid X]
+    (hX : IsOrderComplete X) : ConditionallyCompleteLattice X :=
+  conditionallyCompleteLatticeOfPosSet X fun _ hne hbdd => hX _ hne hbdd
 
 /-- Density character: the least cardinality of a dense subset. -/
 noncomputable def densityCharacter (X : Type u) [TopologicalSpace X] : Cardinal :=
