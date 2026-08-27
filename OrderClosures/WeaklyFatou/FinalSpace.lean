@@ -172,6 +172,8 @@ noncomputable def finalCoordinateEmbedding (n : ℕ) (z : TreeComponent n) : Fin
     (finalCoordinateEmbedding n z).1 n = z := by
   simp [finalCoordinateEmbedding]
 
+/-- Evaluates a single-coordinate embedding away from its chosen coordinate;
+used in the final lattice and convergence calculations. -/
 theorem finalCoordinateEmbedding_ne (n m : ℕ) (h : m ≠ n)
     (z : TreeComponent n) : (finalCoordinateEmbedding n z).1 m = 0 := by
   simp [finalCoordinateEmbedding, h]
@@ -207,10 +209,14 @@ noncomputable instance finalSpaceVectorLattice : VectorLattice FinalSpace where
 noncomputable def finalNormValue (x : FinalSpace) : ℝ :=
   sSup (Set.range fun n ↦ componentLatticeNorm n (x.1 n))
 
+/-- Records boundedness of the component norms of a `c₀` vector; needed to
+justify the supremum defining `finalNormValue`. -/
 theorem finalNormValue_bddAbove (x : FinalSpace) :
     BddAbove (Set.range fun n ↦ componentLatticeNorm n (x.1 n)) :=
   x.2.bddAbove_range
 
+/-- Bounds each component norm by the final supremum norm; used in all norm
+laws and coordinatewise estimates for the final space. -/
 theorem componentNorm_le_finalNormValue (x : FinalSpace) (n : ℕ) :
     componentLatticeNorm n (x.1 n) ≤ finalNormValue x := by
   exact le_csSup (finalNormValue_bddAbove x) ⟨n, rfl⟩
@@ -384,6 +390,8 @@ theorem finalSpace_weakFatou :
       (fun i ↦ (componentNorm_le_finalNormValue (f i) k).trans (hfc i))
   exact ⟨hcomplete, hweak⟩
 
+/-- Shows that single-coordinate inclusion is isometric; used to transfer the
+component large-vector norm to the final space. -/
 theorem finalLatticeNorm_coordinateEmbedding (n : ℕ) (z : TreeComponent n) :
     finalLatticeNorm (finalCoordinateEmbedding n z) = componentLatticeNorm n z := by
   apply le_antisymm
@@ -398,6 +406,8 @@ theorem finalLatticeNorm_coordinateEmbedding (n : ℕ) (z : TreeComponent n) :
       exact (componentLatticeNorm n).nonneg z
   · simpa using componentNorm_le_finalNormValue (finalCoordinateEmbedding n z) n
 
+/-- Shows that single-coordinate inclusion preserves order convergence; used
+to transfer iterated component adherence into the final space. -/
 theorem finalCoordinateEmbedding_orderConverges
     {n : ℕ} {ι : Type} [Preorder ι] {f : ι → TreeComponent n} {z : TreeComponent n}
     (hf : OrderConvergesTo f z) :
@@ -453,6 +463,8 @@ theorem finalCoordinateEmbedding_orderConverges
         finalCoordinateEmbedding_ne n m hmn]
       simp
 
+/-- Transfers membership through every finite adherence stage along a
+coordinate embedding; used for `finalLargeVector_properties`. -/
 theorem finalCoordinateEmbedding_iteratedOrderAdherence (n k : ℕ)
     {z : TreeComponent n}
     (hz : z ∈ iteratedOrderAdherence (unitBallFor (componentLatticeNorm n)) k) :

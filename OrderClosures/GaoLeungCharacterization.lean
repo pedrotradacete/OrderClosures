@@ -22,6 +22,8 @@ section
 variable {X : Type u} [NormedAddCommGroup X] [Lattice X] [IsOrderedAddMonoid X]
   [BanachLattice X]
 
+/-- Extracts an order-convergent subsequence from norm convergence; used to
+identify order adherence with topological closure for order-continuous norms. -/
 private theorem norm_tendsto_has_order_convergent_subsequence
     {z : ℕ → X} {x : X} (hz : Tendsto z atTop (nhds x)) :
     ∃ φ : ℕ → ℕ, StrictMono φ ∧ OrderConvergesTo (z ∘ φ) x := by
@@ -78,6 +80,8 @@ private theorem norm_tendsto_has_order_convergent_subsequence
     exact htail.le_tsum (n - k.down) (fun j _ ↦ abs_nonneg _)
   simpa [v, r, rr, Function.comp_apply, Nat.sub_add_cancel hn] using hterm
 
+/-- Identifies order adherence with norm closure under order continuity; used
+for the forward implications in the Gao--Leung characterization. -/
 private theorem orderAdherence_eq_closure [IsOrderContinuousNorm X] (A : Set X) :
     orderAdherence A = closure A := by
   apply Set.Subset.antisymm
@@ -109,6 +113,8 @@ variable {X : Type u} [NormedAddCommGroup X] [SigmaConditionallyCompleteLattice 
   [IsOrderedAddMonoid X] [BanachLattice X]
 variable {P : Type*}
 
+/-- Propagates pairwise disjointness to a scalar multiple and a finite sum;
+used in the finite disjoint-sum estimate below. -/
 private lemma isVLDisjoint_smul_finset_sum
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (a : P → ℝ) {p : P} {F : Finset P} (hp : p ∉ F) :
@@ -124,6 +130,8 @@ private lemma isVLDisjoint_smul_finset_sum
       · exact ((hx hp'.1).smul_left (a p)).smul_right (a q)
       · exact ih hp'.2
 
+/-- Bounds a positive finite combination of disjoint vectors by one common
+order bound; this supplies boundedness for the supremum defining the embedding. -/
 private lemma finset_disjoint_sum_le
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     {b : X} (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -157,6 +165,8 @@ variable {X : Type u} [NormedAddCommGroup X] [SigmaConditionallyCompleteLattice 
   [IsOrderedAddMonoid X] [BanachLattice X]
 variable {P : Type*} [TopologicalSpace P] [DiscreteTopology P] [Countable P]
 
+/-- Supplies the vector-lattice structure on bounded scalar functions required
+as the domain of `disjointEmbedding`. -/
 private noncomputable instance boundedContinuousFunctionVectorLattice :
     VectorLattice (P →ᵇ ℝ) where
   toModule := inferInstance
@@ -164,14 +174,20 @@ private noncomputable instance boundedContinuousFunctionVectorLattice :
     intro a ha f g h p
     exact mul_le_mul_of_nonneg_left (h p) ha
 
+/-- The finite positive combinations approximating the disjoint embedding;
+their supremum is defined separately as `disjointSup`. -/
 private noncomputable def disjointFiniteSum (x : P → X)
     (a : P →ᵇ ℝ) (F : Finset P) : X :=
   ∑ p ∈ F, a p • x p
 
+/-- The supremum of all finite coefficient sums; used as the positive-cone
+map extended linearly in `disjointEmbedding`. -/
 private noncomputable def disjointSup (x : P → X) (a : P →ᵇ ℝ) : X :=
   sSup (Set.range (disjointFiniteSum x a))
 
 omit [DiscreteTopology P] in
+/-- Packages the defining finite sums as a genuine least upper bound; reused
+throughout the construction of `disjointEmbedding`. -/
 private theorem disjointSup_isLUB
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     {b : X} (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -195,6 +211,8 @@ private theorem disjointSup_isLUB
       (Set.range_nonempty _) hy
 
 omit [DiscreteTopology P] in
+/-- Records positivity of `disjointSup`; needed by the positive linear
+extension used to construct `disjointEmbedding`. -/
 private theorem disjointSup_nonneg
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     {b : X} (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -204,6 +222,8 @@ private theorem disjointSup_nonneg
   exact ⟨∅, by simp [disjointFiniteSum]⟩
 
 omit [DiscreteTopology P] in
+/-- Proves additivity of `disjointSup` on the positive cone, the second input
+to the positive linear extension defining `disjointEmbedding`. -/
 private theorem disjointSup_add
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     {b : X} (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -245,6 +265,8 @@ private theorem disjointSup_add
           Finset.sum_add_distrib]
       _ ≤ disjointSup x (a + c) := hAC.1 ⟨H, rfl⟩
 
+/-- Converts disjoint scalar coefficients on one vector into disjoint scalar
+multiples; used when comparing finite sums with disjoint coefficient functions. -/
 private lemma isVLDisjoint_smul_same_of_inf_eq_zero
     {x : X} {a c : ℝ} (hac : a ⊓ c = 0) :
     IsVLDisjoint (a • x) (c • x) := by
@@ -258,6 +280,8 @@ private lemma isVLDisjoint_smul_same_of_inf_eq_zero
     exact isVLDisjoint_zero_right _
 
 omit [DiscreteTopology P] [Countable P] in
+/-- Extends coefficientwise disjointness from one summand to a finite sum;
+used to prove disjointness of two finite approximating sums. -/
 private lemma isVLDisjoint_smul_finset_sum_of_inf_eq_zero
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     {a c : P →ᵇ ℝ} (hac : a ⊓ c = 0)
@@ -278,6 +302,8 @@ private lemma isVLDisjoint_smul_finset_sum_of_inf_eq_zero
       · simpa [disjointFiniteSum] using ih
 
 omit [DiscreteTopology P] [Countable P] in
+/-- Shows that finite sums with disjoint coefficient functions are disjoint;
+used to pass disjointness to their order suprema. -/
 private lemma isVLDisjoint_finset_sums_of_inf_eq_zero
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     {a c : P →ᵇ ℝ} (hac : a ⊓ c = 0)
@@ -293,6 +319,8 @@ private lemma isVLDisjoint_finset_sums_of_inf_eq_zero
         (by simpa [disjointFiniteSum] using ih)
 
 omit [DiscreteTopology P] in
+/-- Passes disjointness of coefficient functions to the corresponding
+`disjointSup` values; this proves that the eventual embedding is a lattice map. -/
 private theorem disjointSup_disjoint
     {x : P → X} (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     {b : X} (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -323,6 +351,8 @@ private theorem disjointSup_disjoint
     (disjointSup_nonneg hx hb hxb ha) (disjointSup_nonneg hx hb hxb hc)
     (htauA _ rfl)
 
+/-- Embeds bounded coefficient functions along a disjoint family; this is the
+main device used to transport the row-limit counterexample into `X`. -/
 private noncomputable def disjointEmbedding
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b) :
@@ -344,6 +374,8 @@ private noncomputable def disjointEmbedding
   exact disjointSup_disjoint hx hb hxb hac
 
 omit [DiscreteTopology P] in
+/-- Evaluates `disjointEmbedding` on the positive cone as `disjointSup`; used
+for its order, norm, and band estimates. -/
 private theorem disjointEmbedding_apply_nonneg
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -355,6 +387,8 @@ private theorem disjointEmbedding_apply_nonneg
     (fun _ _ ha hc ↦ disjointSup_add hx hb hxb ha hc) ha
 
 omit [DiscreteTopology P] in
+/-- Controls each coordinate summand by the absolute value of its embedded
+vector; used both for the lower norm estimate and coordinate convergence. -/
 private theorem abs_apply_smul_le_abs_disjointEmbedding
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -367,6 +401,8 @@ private theorem abs_apply_smul_le_abs_disjointEmbedding
   simp [disjointFiniteSum]
 
 omit [DiscreteTopology P] in
+/-- Gives the embedding a uniform lower norm bound from the disjoint sequence;
+used to bound coefficient functions in the row-limit exclusion argument. -/
 private theorem disjointEmbedding_lower_bound
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -396,6 +432,8 @@ private theorem disjointEmbedding_lower_bound
     _ = ‖disjointEmbedding x hx b hb hxb a‖ := by field_simp
 
 omit [DiscreteTopology P] in
+/-- Places positive embedded functions in the band generated by the disjoint
+family; used in the proof of coordinatewise uo-convergence. -/
 private theorem disjointEmbedding_nonneg_mem_doubleDisjointComplement
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -413,6 +451,8 @@ private theorem disjointEmbedding_nonneg_mem_doubleDisjointComplement
   · exact disjointSup_isLUB hx hb hxb ha
 
 omit [DiscreteTopology P] in
+/-- A zero coefficient makes the embedded vector disjoint from that coordinate;
+used to show that eventually vanishing coordinates converge uo. -/
 private theorem isVLDisjoint_disjointEmbedding_of_apply_eq_zero
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -449,6 +489,8 @@ section DisjointSequence
 variable {X : Type u} [NormedAddCommGroup X] [Lattice X] [IsOrderedAddMonoid X]
   [BanachLattice X]
 
+/-- Extracts a positive order-bounded disjoint sequence with norms bounded away
+from zero from failure of order continuity; this starts the reverse implication. -/
 private theorem exists_orderBounded_disjoint_sequence_norm_bounded_away
     (hX : ¬ IsOrderContinuousNorm X) :
     ∃ (ε : ℝ) (b : X) (x : ℕ → X), 0 < ε ∧ 0 ≤ b ∧
@@ -492,9 +534,14 @@ end DisjointSequence
 
 section RowLimitSublattice
 
+/-- The two-dimensional coordinate set used by the row-limit example. -/
 private abbrev PairIndex := ℕ × ℕ
+
+/-- Bounded scalar functions on the row-limit coordinate set. -/
 private abbrev PairLInfinity := PairIndex →ᵇ ℝ
 
+/-- Functions whose row tails converge to the scaled row head; bundled first
+as a submodule before adding lattice closure. -/
 private def rowLimitSubmodule : Submodule ℝ PairLInfinity where
   carrier := {a | ∀ m : ℕ,
     Tendsto (fun n : ℕ ↦ a (m, n + 1)) atTop
@@ -507,6 +554,8 @@ private def rowLimitSubmodule : Submodule ℝ PairLInfinity where
     intro r a ha m
     simpa [mul_assoc, mul_left_comm, mul_comm] using (ha m).const_smul r
 
+/-- The row-limit submodule as a vector sublattice; its image supplies the
+sublattice separating order adherence from uo-adherence. -/
 private noncomputable def rowLimitSublattice : VectorSublattice PairLInfinity :=
   VectorSublattice.ofAbsClosed rowLimitSubmodule fun a ha ↦ by
     intro m
@@ -514,6 +563,8 @@ private noncomputable def rowLimitSublattice : VectorSublattice PairLInfinity :=
       simp only [BoundedContinuousFunction.coe_abs, Pi.abs_apply]
     rw [abs_mul, abs_of_nonneg (by positivity : (0 : ℝ) ≤ (m + 1 : ℕ))]
 
+/-- The limiting row-head function that belongs to uo-adherence but will be
+excluded from order adherence. -/
 private noncomputable def rowHead : PairLInfinity :=
   BoundedContinuousFunction.ofNormedAddCommGroupDiscrete
     (fun p : PairIndex ↦ if p.2 = 0 then 1 else 0) 1 (by
@@ -521,6 +572,8 @@ private noncomputable def rowHead : PairLInfinity :=
       simp [Real.norm_eq_abs]
       split_ifs <;> norm_num)
 
+/-- Finite row approximations to `rowHead`; these lie in `rowLimitSublattice`
+and agree eventually at every coordinate. -/
 private noncomputable def rowApprox (j : ℕ) : PairLInfinity :=
   BoundedContinuousFunction.ofNormedAddCommGroupDiscrete
     (fun p : PairIndex ↦
@@ -544,6 +597,8 @@ private noncomputable def rowApprox (j : ℕ) : PairLInfinity :=
         · rw [if_neg ht, abs_zero]
           positivity)
 
+/-- Verifies that every finite row approximation belongs to the row-limit
+sublattice, so its image can witness uo-adherence. -/
 private theorem rowApprox_mem (j : ℕ) : rowApprox j ∈ rowLimitSublattice := by
   intro m
   by_cases hm : m ≤ j
@@ -564,6 +619,8 @@ private theorem rowApprox_mem (j : ℕ) : rowApprox j ∈ rowLimitSublattice := 
     have ht := tendsto_const_nhds.congr' heq.symm
     simp [rowApprox, hm]
 
+/-- Records eventual coordinatewise agreement of the row approximations with
+`rowHead`; this is the input for their embedded uo-convergence. -/
 private theorem rowApprox_eventually_apply_eq_rowHead (p : PairIndex) :
     ∀ᶠ j in atTop, rowApprox j p = rowHead p := by
   apply eventually_atTop.mpr
@@ -583,6 +640,8 @@ variable {X : Type u} [NormedAddCommGroup X] [SigmaConditionallyCompleteLattice 
 variable {P : Type*} [TopologicalSpace P] [DiscreteTopology P] [Countable P]
 
 omit [DiscreteTopology P] [Countable P] in
+/-- Turns eventual coordinatewise vanishing into order convergence after
+clamping; used to establish uo-convergence of the disjoint embedding. -/
 private theorem orderConvergesTo_inf_of_eventually_coordinate_zero
     (x : P → X) (T : VecLatHom (P →ᵇ ℝ) X) (d : ℕ → P →ᵇ ℝ)
     (hd0 : ∀ j, 0 ≤ d j)
@@ -673,6 +732,8 @@ private theorem orderConvergesTo_inf_of_eventually_coordinate_zero
     simpa [abs_of_nonneg (hz0 j), z] using hzle
 
 omit [DiscreteTopology P] in
+/-- Transfers eventual coordinatewise equality to uo-convergence through the
+disjoint embedding; applied to `rowApprox` and `rowHead`. -/
 private theorem disjointEmbedding_uoConverges_of_eventuallyEq
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -708,6 +769,8 @@ variable {E : Type*} {X : Type*}
   [AddCommGroup E] [Lattice E] [IsOrderedAddMonoid E] [VectorLattice E]
   [AddCommGroup X] [Lattice X] [IsOrderedAddMonoid X] [VectorLattice X]
 
+/-- Bundles the image of a vector sublattice under a lattice homomorphism;
+used to place the row-limit construction inside the ambient lattice. -/
 private def vectorSublatticeImage (T : VecLatHom E X) (H : VectorSublattice E) :
     VectorSublattice X where
   carrier := T '' (H : Set E)
@@ -731,6 +794,8 @@ variable {X : Type u} [NormedAddCommGroup X] [SigmaConditionallyCompleteLattice 
 variable {P : Type*} [TopologicalSpace P] [DiscreteTopology P] [Countable P]
 
 omit [DiscreteTopology P] in
+/-- Recovers convergence of each nonzero coordinate from order convergence of
+embedded functions; used to exclude `rowHead` from order adherence. -/
 private theorem tendsto_apply_of_disjointEmbedding_orderConvergesTo
     (x : P → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -776,6 +841,8 @@ section RowLimitExclusion
 variable {X : Type u} [NormedAddCommGroup X] [SigmaConditionallyCompleteLattice X]
   [IsOrderedAddMonoid X] [BanachLattice X]
 
+/-- Shows that the embedded row head is not an order-adherence point of the
+row-limit image, providing the strict separation needed in the counterexample. -/
 private theorem rowHead_not_mem_orderAdherence_image
     (x : PairIndex → X) (hx : Pairwise fun p q ↦ IsVLDisjoint (x p) (x q))
     (b : X) (hb : 0 ≤ b) (hxb : ∀ p, 0 ≤ x p ∧ x p ≤ b)
@@ -858,6 +925,8 @@ section LiftConvergence
 variable {X : Type u} [AddCommGroup X] [Lattice X] [IsOrderedAddMonoid X]
 
 omit [IsOrderedAddMonoid X] in
+/-- Reindexes sequential order convergence by `ULift ℕ`; used to match the
+universe required by the definitions of adherence. -/
 private theorem orderConvergesTo_uliftNat {f : ℕ → X} {x : X}
     (h : OrderConvergesTo f x) :
     OrderConvergesTo (fun i : ULift.{u} ℕ ↦ f i.down) x := by
@@ -869,6 +938,8 @@ private theorem orderConvergesTo_uliftNat {f : ℕ → X} {x : X}
   exact ⟨ULift.up n, fun i hi ↦ hn i.down hi⟩
 
 omit [IsOrderedAddMonoid X] in
+/-- Reindexes sequential uo-convergence by `ULift ℕ`; used when inserting the
+row approximations into uo-adherence. -/
 private theorem uoConvergesTo_uliftNat {f : ℕ → X} {x : X}
     (h : UOConvergesTo f x) :
     UOConvergesTo (fun i : ULift.{u} ℕ ↦ f i.down) x := by
@@ -882,6 +953,8 @@ section ReverseImplication
 variable {X : Type u} [NormedAddCommGroup X] [SigmaConditionallyCompleteLattice X]
   [IsOrderedAddMonoid X] [BanachLattice X]
 
+/-- Derives order continuity from equality of order and uo-adherence on every
+vector sublattice; this is the reverse step of the Gao--Leung cycle. -/
 private theorem orderContinuousNorm_of_forall_orderAdherence_eq_uoAdherence
     (h : ∀ Y : VectorSublattice X,
       orderAdherence (Y : Set X) = uoAdherence (Y : Set X)) :

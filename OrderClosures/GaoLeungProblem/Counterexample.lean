@@ -282,6 +282,8 @@ def signedPositiveSubsetSuprema
     (S : Set X) : Set X :=
   {x | x⁺ ∈ positiveSubsetSuprema S ∧ x⁻ ∈ positiveSubsetSuprema S}
 
+/-- Isolates the order-closedness of positive subset suprema so it can be
+reused for the signed envelope in `signedPositiveSubsetSuprema_isOrderClosed`. -/
 theorem positiveSubsetSuprema_isOrderClosed
     {X : Type u} [AddCommGroup X] [Lattice X] [IsOrderedAddMonoid X]
     [VectorLattice X] {S : Set X} (hS : LatticeOrderedAddCommGroup.IsSolid S) :

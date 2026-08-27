@@ -183,6 +183,8 @@ def FremlinProperty : Prop :=
     (∃ K, HasWeakFatouProperty p K) →
       ∃ q : PaperLatticeNorm X, HasFatouProperty q ∧ EquivalentNorms p q
 
+/-- Promotes the sequential weak Nakano estimate to directed sets in a
+separable normed lattice; the paper-norm version below reduces to this lemma. -/
 theorem weakNakano_of_weakSequentialNakano
     {Y : Type u} [NormedAddCommGroup Y] [Lattice Y] [IsOrderedAddMonoid Y]
     [NormedVectorLattice Y] [TopologicalSpace.SeparableSpace Y]
@@ -245,6 +247,8 @@ theorem weakNakano_of_weakSequentialNakano
   let xA : ↥A := ⟨x, hx⟩
   exact hclosure (by rw [hdense.closure_eq]; exact Set.mem_univ xA)
 
+/-- Converts the directed weak Nakano estimate into the weak Fatou inequality
+for an ambient norm; reused after transporting a paper lattice norm. -/
 theorem weakFatou_of_weakNakano_norm
     {Y : Type u} [NormedAddCommGroup Y] [Lattice Y] [IsOrderedAddMonoid Y]
     [NormedVectorLattice Y] {K : ℝ}
@@ -320,6 +324,8 @@ theorem separable_weakSequentialNakano_implies_weakNakano
   have hNak := weakNakano_of_weakSequentialNakano hseq
   exact ⟨hNak, weakFatou_of_weakNakano_norm hNak⟩
 
+/-- Extends the separable sequential-to-directed reduction to an arbitrary
+`PaperLatticeNorm`; used to prove `component_weakFatou`. -/
 theorem weakNakano_of_weakSequentialNakano_p
     {Y : Type u} [NormedAddCommGroup Y] [Lattice Y] [IsOrderedAddMonoid Y]
     [NormedVectorLattice Y] [TopologicalSpace.SeparableSpace Y]
@@ -377,6 +383,8 @@ theorem weakNakano_of_weakSequentialNakano_p
   intro q hq
   exact hclosure (by rw [hdense.closure_eq]; exact Set.mem_univ ⟨q, hq⟩)
 
+/-- Extends the weak-Nakano-to-weak-Fatou implication to a
+`PaperLatticeNorm`; used for the component norm in `component_weakFatou`. -/
 theorem weakFatou_of_weakNakano_p
     {Y : Type u} [AddCommGroup Y] [Lattice Y] [IsOrderedAddMonoid Y]
     [VectorLattice Y] (p : PaperLatticeNorm Y) {K : ℝ}

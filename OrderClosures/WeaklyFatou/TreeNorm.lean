@@ -35,18 +35,24 @@ noncomputable def treeSeminorm (n : ℕ)
   sInf {r : ℝ | ∃ w : TreeCoefficients n,
     0 ≤ w ∧ |x| ≤ treeOperator n w ∧ treeRho n w = r}
 
+/-- Records nonnegativity of the weighted coefficient functional; used in all
+seminorm and band-mass estimates. -/
 theorem treeRho_nonneg (n : ℕ) (w : TreeCoefficients n) :
     0 ≤ treeRho n w := by
   classical
   exact Finsupp.sum_nonneg' fun t ↦
     mul_nonneg (zpow_nonneg (by norm_num) _) (abs_nonneg _)
 
+/-- Shows that `treeRho` is invariant under negation; used for symmetry of the
+bundled lattice seminorm. -/
 theorem treeRho_neg (n : ℕ) (w : TreeCoefficients n) :
     treeRho n (-w) = treeRho n w := by
   classical
   rw [treeRho, treeRho, Finsupp.sum, Finsupp.sum, Finsupp.support_neg]
   simp
 
+/-- Computes `treeRho` under scalar multiplication; used for homogeneity of
+the tree seminorm. -/
 theorem treeRho_smul (n : ℕ) (a : ℝ) (w : TreeCoefficients n) :
     treeRho n (a • w) = |a| * treeRho n w := by
   classical
@@ -57,6 +63,8 @@ theorem treeRho_smul (n : ℕ) (a : ℝ) (w : TreeCoefficients n) :
   intro t _
   ring
 
+/-- Gives the triangle inequality for `treeRho`; used to prove subadditivity
+of the induced seminorm. -/
 theorem treeRho_add_le (n : ℕ) (u v : TreeCoefficients n) :
     treeRho n (u + v) ≤ treeRho n u + treeRho n v := by
   classical
@@ -74,6 +82,8 @@ theorem treeRho_add_le (n : ℕ) (u v : TreeCoefficients n) :
       (zpow_nonneg (show (0 : ℝ) ≤ 2 by norm_num)
         (-(TreeNode.level t : ℤ))))
 
+/-- Shows coefficientwise monotonicity of `treeRho` on the positive cone;
+used to compare band projections and trimmed coefficients. -/
 theorem treeRho_mono_of_nonneg (n : ℕ) {u v : TreeCoefficients n}
     (hu : 0 ≤ u) (huv : u ≤ v) : treeRho n u ≤ treeRho n v := by
   classical
@@ -88,16 +98,22 @@ theorem treeRho_mono_of_nonneg (n : ℕ) {u v : TreeCoefficients n}
   rw [abs_of_nonneg (hu t), abs_of_nonneg (hv t)]
   exact mul_le_mul_of_nonneg_left (huv t) (zpow_nonneg (by norm_num) _)
 
+/-- Computes the tree operator at zero; used in the zero law for the induced
+seminorm and generated sublattice. -/
 theorem treeOperator_zero (n : ℕ) :
     treeOperator n (0 : TreeCoefficients n) = 0 := by
   simp [treeOperator]
 
+/-- Records additivity of the tree operator; used in seminorm subadditivity
+and the moderatedness decomposition. -/
 theorem treeOperator_add (n : ℕ) (u v : TreeCoefficients n) :
     treeOperator n (u + v) = treeOperator n u + treeOperator n v := by
   classical
   simp only [treeOperator]
   exact Finsupp.sum_add_index (by simp) (by simp [add_smul])
 
+/-- Records homogeneity of the tree operator; used to scale majorants in the
+seminorm and component constructions. -/
 theorem treeOperator_smul (n : ℕ) (a : ℝ) (w : TreeCoefficients n) :
     treeOperator n (a • w) = a • treeOperator n w := by
   classical
@@ -110,6 +126,8 @@ theorem treeOperator_smul (n : ℕ) (a : ℝ) (w : TreeCoefficients n) :
   intro t _
   simp [smul_smul]
 
+/-- A coefficientwise positive vector has a positive tree image; used whenever
+an operator majorant is treated as a positive component. -/
 theorem treeOperator_nonneg (n : ℕ) (w : TreeCoefficients n) (hw : 0 ≤ w) :
     0 ≤ treeOperator n w := by
   classical
@@ -121,10 +139,14 @@ theorem treeOperator_nonneg (n : ℕ) (w : TreeCoefficients n) (hw : 0 ≤ w) :
     by_cases h : α ∈ treeCylinder n t <;> simp [treeFunction,
       BoundedContinuousFunction.indicator, Set.indicator, h])
 
+/-- Evaluates the tree operator on a single basis coefficient; used to place
+tree functions in the generated component. -/
 theorem treeOperator_single (n : ℕ) (t : TreeNode n) (a : ℝ) :
     treeOperator n (Finsupp.single t a) = a • treeFunction n t := by
   simp [treeOperator]
 
+/-- Expands pointwise evaluation of the tree operator as a finite sum; used in
+support-vanishing and root estimates. -/
 theorem treeOperator_apply (n : ℕ) (w : TreeCoefficients n)
     (α : TreeProduct n) :
     treeOperator n w α = w.sum (fun t a ↦ a * treeFunction n t α) := by
@@ -138,12 +160,16 @@ theorem treeOperator_apply (n : ℕ) (w : TreeCoefficients n)
   intro t _
   simp
 
+/-- Identifies the root tree function with the constant one function; used as
+the universal positive order majorant. -/
 theorem treeFunction_root (n : ℕ) :
     treeFunction n (TreeNode.root n) = 1 := by
   ext α
   simp [treeFunction, BoundedContinuousFunction.indicator, treeCylinder,
     TreeNode.root, TreeNode.level]
 
+/-- Dominates any continuous function by its uniform norm times the root;
+used to prove that the admissible-majorant set is nonempty. -/
 theorem abs_le_norm_smul_root (n : ℕ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) :
     |x| ≤ ‖x‖ • treeFunction n (TreeNode.root n) := by
@@ -152,6 +178,8 @@ theorem abs_le_norm_smul_root (n : ℕ)
   change |x α| ≤ ‖x‖ * 1
   simpa using x.norm_coe_le_norm α
 
+/-- Supplies a coefficient majorant for every function; needed to define the
+infimum in `treeSeminorm`. -/
 theorem treeAdmissible_nonempty (n : ℕ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) :
     {r : ℝ | ∃ w : TreeCoefficients n,
@@ -162,6 +190,8 @@ theorem treeAdmissible_nonempty (n : ℕ)
   · rw [treeOperator_single]
     exact abs_le_norm_smul_root n x
 
+/-- Bounds all admissible `treeRho` values below by zero; used to justify
+order properties of the defining infimum. -/
 theorem treeAdmissible_bddBelow (n : ℕ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) :
     BddBelow {r : ℝ | ∃ w : TreeCoefficients n,
@@ -170,6 +200,8 @@ theorem treeAdmissible_bddBelow (n : ℕ)
   rintro r ⟨w, _, _, rfl⟩
   exact treeRho_nonneg n w
 
+/-- Proves nonnegativity of `treeSeminorm`; used as a field of the bundled
+lattice seminorm. -/
 theorem treeSeminorm_nonneg (n : ℕ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) :
     0 ≤ treeSeminorm n x := by
@@ -177,12 +209,16 @@ theorem treeSeminorm_nonneg (n : ℕ)
   rintro r ⟨w, _, _, rfl⟩
   exact treeRho_nonneg n w
 
+/-- Bounds the seminorm by any admissible coefficient majorant; used throughout
+the exact-basis and moderatedness estimates. -/
 theorem treeSeminorm_le_of_majorant (n : ℕ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) (w : TreeCoefficients n)
     (hw : 0 ≤ w) (hxw : |x| ≤ treeOperator n w) :
     treeSeminorm n x ≤ treeRho n w := by
   exact csInf_le (treeAdmissible_bddBelow n x) ⟨w, hw, hxw, rfl⟩
 
+/-- Evaluates the tree seminorm at zero; used for the zero field of
+`treeLatticeSeminorm`. -/
 theorem treeSeminorm_zero (n : ℕ) :
     treeSeminorm n (0 : BoundedContinuousFunction (TreeProduct n) ℝ) = 0 := by
   apply le_antisymm
@@ -191,6 +227,8 @@ theorem treeSeminorm_zero (n : ℕ) :
         (by simp [treeOperator_zero]))
   · exact treeSeminorm_nonneg n 0
 
+/-- Approximates the infimum defining `treeSeminorm` by a strict majorant;
+used to prove seminorm laws and to select coefficients in `component_moderated`. -/
 theorem exists_treeMajorant_lt (n : ℕ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) {ε : ℝ} (hε : 0 < ε) :
     ∃ w : TreeCoefficients n, 0 ≤ w ∧ |x| ≤ treeOperator n w ∧
@@ -200,6 +238,8 @@ theorem exists_treeMajorant_lt (n : ℕ)
       (lt_add_of_pos_right (treeSeminorm n x) hε)
   exact ⟨w, hw, hxw, by simpa [hwr] using hr⟩
 
+/-- Gives the difficult direction of seminorm homogeneity; used together with
+rescaling to prove equality in the bundled seminorm. -/
 theorem treeSeminorm_smul_le (n : ℕ) (a : ℝ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) :
     treeSeminorm n (a • x) ≤ |a| * treeSeminorm n x := by
@@ -229,6 +269,8 @@ theorem treeSeminorm_smul_le (n : ℕ) (a : ℝ)
       rw [mul_add, mul_div_cancel₀ _ habs.ne'] at this
       exact this.le
 
+/-- Bounds every tree function in uniform norm; used to control finite tree
+operators by their coefficient sums. -/
 theorem treeFunction_norm_le_one (n : ℕ) (t : TreeNode n) :
     ‖treeFunction n t‖ ≤ 1 := by
   rw [BoundedContinuousFunction.norm_le zero_le_one]
@@ -239,6 +281,8 @@ theorem treeFunction_norm_le_one (n : ℕ) (t : TreeNode n) :
   · rw [treeFunction_apply_of_notMem n t h]
     norm_num
 
+/-- Bounds the uniform norm of a tree operator by the absolute coefficient
+sum; used in the comparison between uniform and tree norms. -/
 theorem treeOperator_norm_le_sum (n : ℕ) (w : TreeCoefficients n) :
     ‖treeOperator n w‖ ≤ ∑ t ∈ w.support, |w t| := by
   classical
@@ -252,6 +296,8 @@ theorem treeOperator_norm_le_sum (n : ℕ) (w : TreeCoefficients n) :
       rw [norm_smul, Real.norm_eq_abs]
       nlinarith [abs_nonneg (w t), treeFunction_norm_le_one n t]
 
+/-- Controls the unweighted coefficient sum by `treeRho`; combined with the
+operator estimate to obtain the norm comparison. -/
 theorem treeRho_controls_sum (n : ℕ) (w : TreeCoefficients n) :
     (∑ t ∈ w.support, |w t|) ≤ (2 : ℝ) ^ n * treeRho n w := by
   classical
@@ -265,6 +311,8 @@ theorem treeRho_controls_sum (n : ℕ) (w : TreeCoefficients n) :
     exact sub_nonneg.mpr (by exact_mod_cast t.2)
   nlinarith [abs_nonneg (w t)]
 
+/-- Combines the preceding estimates into the main operator norm bound; used
+to prove definiteness and equivalence of the component norm. -/
 theorem norm_le_pow_mul_treeRho (n : ℕ)
     (x : BoundedContinuousFunction (TreeProduct n) ℝ) (w : TreeCoefficients n)
     (hw : 0 ≤ w) (hxw : |x| ≤ treeOperator n w) :
@@ -276,6 +324,8 @@ theorem norm_le_pow_mul_treeRho (n : ℕ)
     _ ≤ ∑ t ∈ w.support, |w t| := treeOperator_norm_le_sum n w
     _ ≤ (2 : ℝ) ^ n * treeRho n w := treeRho_controls_sum n w
 
+/-- Dominates a positive tree operator by its total coefficient mass times the
+root; used in the upper norm comparison. -/
 theorem treeOperator_le_root_of_nonneg (n : ℕ) (w : TreeCoefficients n)
     (hw : 0 ≤ w) :
     treeOperator n w ≤
@@ -359,11 +409,15 @@ theorem treeSeminorm_norm_comparison
     rw [mul_add, mul_div_cancel₀ _ hpow.ne'] at hscaled
     exact hnorm.trans hscaled.le
 
+/-- Computes the level of a strict prefix; used to compare nodes from nested
+tree cylinders in the exact-basis proof. -/
 theorem level_strictPrefix {n : ℕ} (t : TreeNode n)
     (j : Fin (TreeNode.level t)) :
     TreeNode.level (strictPrefix t j).1 = j := by
   simp [strictPrefix, TreeNode.restrict, TreeNode.level]
 
+/-- Shows that inclusion of nonempty tree cylinders forces the corresponding
+level inequality; used to isolate the maximal-weight basis term. -/
 theorem level_le_of_treeCylinder_subset {n : ℕ} {t u : TreeNode n}
     (hsub : treeCylinder n t ⊆ treeCylinder n u) :
     TreeNode.level u ≤ TreeNode.level t := by
@@ -386,6 +440,8 @@ theorem level_le_of_treeCylinder_subset {n : ℕ} {t u : TreeNode n}
   have hαu := hsub hαt j
   simp [α, q] at hαu
 
+/-- Records positivity of every tree function; used for lattice estimates and
+for the positive terminal family in the component construction. -/
 theorem treeFunction_nonneg (n : ℕ) (t : TreeNode n) :
     0 ≤ treeFunction n t := by
   intro α
@@ -473,6 +529,8 @@ noncomputable def treeSublattice (n : ℕ) :
     VectorSublattice (BoundedContinuousFunction (TreeProduct n) ℝ) :=
   (VectorSublattice.generated (Set.range (treeFunction n))).topologicalClosure
 
+/-- Places every finitely supported tree operator in the generated closed
+sublattice; used to turn coefficient majorants into component elements. -/
 theorem treeOperator_mem_treeSublattice (n : ℕ) (w : TreeCoefficients n) :
     treeOperator n w ∈ treeSublattice n := by
   classical

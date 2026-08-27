@@ -1,5 +1,9 @@
 /.lake/
 
+# Local agent instructions
+/AGENTS_Phase1.md
+/AGENTS_Phase2.md
+
 # Lean editor and profiler output
 *.olean
 *.ilean

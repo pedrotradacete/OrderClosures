@@ -62,6 +62,8 @@ def strictPrefix {n : ℕ} (t : TreeNode n) (j : Fin (TreeNode.level t)) :
 def treeCylinder (n : ℕ) (t : TreeNode n) : Set (TreeProduct n) :=
   {α | ∀ j : Fin (TreeNode.level t), α (strictPrefix t j) ≤ t.1.get j}
 
+/-- Characterizes membership in a child cylinder by the parent coordinates
+and one new label; used in the cylinder partition proofs. -/
 theorem mem_treeCylinder_child_iff
     (n : ℕ) (t : TreeNode n) (ht : TreeNode.level t < n) (m : ℕ)
     (α : TreeProduct n) :
@@ -142,11 +144,15 @@ noncomputable def treeFunction (n : ℕ) (t : TreeNode n) :
     BoundedContinuousFunction (TreeProduct n) ℝ :=
   BoundedContinuousFunction.indicator (treeCylinder n t) (treeCylinder_isClopen n t)
 
+/-- Evaluates a tree function on its supporting cylinder; used in the exact
+basis and tree-operator computations. -/
 theorem treeFunction_apply_of_mem (n : ℕ) (t : TreeNode n)
     {α : TreeProduct n} (hα : α ∈ treeCylinder n t) : treeFunction n t α = 1 := by
   classical
   simp [treeFunction, BoundedContinuousFunction.indicator, Set.indicator, hα]
 
+/-- Evaluates a tree function off its supporting cylinder; used to show finite
+tree sums vanish outside their cylinder union. -/
 theorem treeFunction_apply_of_notMem (n : ℕ) (t : TreeNode n)
     {α : TreeProduct n} (hα : α ∉ treeCylinder n t) : treeFunction n t α = 0 := by
   classical
@@ -261,10 +267,14 @@ noncomputable def finiteTreeSup (n : ℕ) (F : Finset (TreeNode n)) :
     apply isClopen_iUnion_of_finite
     exact fun t ↦ treeCylinder_isClopen n t.1)
 
+/-- The last label of a nonroot node, with a harmless root default; used to
+construct coordinates escaping finite cylinder unions. -/
 def treeLastLabel {n : ℕ} (t : TreeNode n) : ℕ :=
   if h : 0 < TreeNode.level t then
     t.1.get ⟨TreeNode.level t - 1, Nat.sub_lt h (by omega)⟩ else 0
 
+/-- Identifies the last strict prefix with the parent of a nonroot node; used
+when constructing points outside parent-disjoint cylinder families. -/
 theorem strictPrefix_last_eq_parent {n : ℕ} (t : TreeNode n)
     (ht : 0 < TreeNode.level t) :
     let j : Fin (TreeNode.level t) :=
@@ -277,6 +287,8 @@ theorem strictPrefix_last_eq_parent {n : ℕ} (t : TreeNode n)
       List.dropLast_eq_take]
   · simp [treeLastLabel, ht]
 
+/-- Records positivity of a finite supremum of tree functions; used in the
+least-upper-bound statement for parent-disjoint families. -/
 theorem finiteTreeSup_nonneg (n : ℕ) (F : Finset (TreeNode n)) :
     0 ≤ finiteTreeSup n F := by
   intro α
@@ -284,12 +296,16 @@ theorem finiteTreeSup_nonneg (n : ℕ) (F : Finset (TreeNode n)) :
   by_cases hα : α ∈ finiteCylinderUnion n F <;>
     simp [finiteTreeSup, BoundedContinuousFunction.indicator, Set.indicator, hα]
 
+/-- Shows that a finite tree supremum vanishes outside its cylinder union;
+used in the common-lower-bound argument. -/
 theorem finiteTreeSup_apply_of_notMem (n : ℕ) (F : Finset (TreeNode n))
     {α : TreeProduct n} (hα : α ∉ finiteCylinderUnion n F) :
     finiteTreeSup n F α = 0 := by
   classical
   simp [finiteTreeSup, BoundedContinuousFunction.indicator, Set.indicator, hα]
 
+/-- Forces a common lower bound to be nonpositive when supports have
+parent-disjoint subsequences; reused in both tree and transient-band lemmas. -/
 theorem commonLower_le_zero_of_parentDisjoint_subseq
     (n : ℕ) (F : ℕ → Finset (TreeNode n))
     (hF : Pairwise fun i j ↦ ParentDisjoint (F i : Set (TreeNode n))

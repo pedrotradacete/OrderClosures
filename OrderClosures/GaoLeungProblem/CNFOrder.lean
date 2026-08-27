@@ -25,21 +25,29 @@ def cnfExtensionLT (ζ ζ' : Ordinal.{u}) : Prop :=
 /-- Reflexive closure of the paper's relation `≺`. -/
 def cnfExtensionLE (ζ ζ' : Ordinal.{u}) : Prop := ζ = ζ' ∨ cnfExtensionLT ζ ζ'
 
+/-- One strict extension after a fixed CNF prefix; introduced separately so
+transitivity and comparability can be proved before taking transitive closure. -/
 def CNFStep (pre : List (Ordinal.{u} × Ordinal.{u}))
     (x y : Ordinal.{u} × Ordinal.{u}) : Prop :=
   (y.1 = x.1 ∧ x.2 < y.2) ∨
     (x.1 < y.1 ∧
       (pre = [] ∨ ∃ z, pre.getLast? = some z ∧ y.1 < z.1))
 
+/-- The transitive closure of one-step CNF extensions; used as a tractable list
+model of `cnfExtensionLT`. -/
 def CNFListLT (l l' : List (Ordinal.{u} × Ordinal.{u})) : Prop :=
   ∃ (pre tail : List (Ordinal.{u} × Ordinal.{u}))
     (x y : Ordinal.{u} × Ordinal.{u}),
     l = pre ++ x :: tail ∧ l' = pre ++ [y] ∧ CNFStep pre x y
 
+/-- Evaluates a list of exponent-coefficient pairs as an ordinal CNF sum; used
+to compare list extensions with ordinal inequalities. -/
 noncomputable def cnfValue
     (l : List (Ordinal.{u} × Ordinal.{u})) : Ordinal.{u} :=
   l.foldr (fun p r ↦ Ordinal.omega0 ^ p.1 * p.2 + r) 0
 
+/-- Computes the ordinal represented by concatenated CNF lists; used in the
+later comparison lemmas for common prefixes. -/
 theorem cnfValue_append
     (l m : List (Ordinal.{u} × Ordinal.{u})) :
     cnfValue (l ++ m) = cnfValue l + cnfValue m := by
@@ -50,6 +58,8 @@ theorem cnfValue_append
         (Ordinal.omega0 ^ p.1 * p.2 + cnfValue l) + cnfValue m
       rw [ih, add_assoc]
 
+/-- Bounds a valid CNF tail by the next larger omega power; used to compare
+CNF values after extending a common prefix. -/
 theorem cnfValue_lt_opow
     (l : List (Ordinal.{u} × Ordinal.{u}))
     (hsorted : (l.map Prod.fst).Pairwise (fun a b ↦ b < a))
@@ -71,6 +81,8 @@ theorem cnfValue_lt_opow
       exact Ordinal.opow_mul_add_lt_opow
         (hcoeff a (by simp)) htail (hexp a (by simp))
 
+/-- Shows that evaluating the CNF list of an ordinal recovers that ordinal;
+used to translate between list and ordinal formulations of the extension order. -/
 theorem CNF_cnfValue
     (l : List (Ordinal.{u} × Ordinal.{u}))
     (hsorted : (l.map Prod.fst).Pairwise (fun a b ↦ b < a))
@@ -95,6 +107,8 @@ theorem CNF_cnfValue
           (hpos p (by simp)).ne' (hlt p (by simp)) htailValue,
         ih hsorted.2 htailPos htailLt]
 
+/-- Inserts one monomial into a valid CNF list with ordinal-addition semantics;
+used to construct explicit strict extensions. -/
 noncomputable def cnfAddMonomial
     (l : List (Ordinal.{u} × Ordinal.{u})) (γ d : Ordinal.{u}) :
     List (Ordinal.{u} × Ordinal.{u}) :=
@@ -104,6 +118,8 @@ noncomputable def cnfAddMonomial
       if γ < δ then (δ, e) :: cnfAddMonomial tail γ d
       else if γ = δ then [(δ, e + d)] else [(γ, d)]
 
+/-- Computes the value after inserting one monomial into a CNF list; used to
+verify that `cnfAddMonomial` models ordinal addition. -/
 theorem cnfValue_cnfAddMonomial
     (l : List (Ordinal.{u} × Ordinal.{u}))
     (hsorted : (l.map Prod.fst).Pairwise (fun a b ↦ b < a))
@@ -153,6 +169,8 @@ theorem cnfValue_cnfAddMonomial
           exact (Ordinal.add_of_omega0_opow_le hvalue
             (Ordinal.le_mul_left _ hd)).symm
 
+/-- Preserves the upper exponent bound when adding a monomial; needed for the
+validity proof of the constructed CNF list. -/
 theorem cnfAddMonomial_exponents_lt
     (l : List (Ordinal.{u} × Ordinal.{u})) (γ d δ : Ordinal.{u})
     (hl : ∀ p ∈ l, p.1 < δ) (hγ : γ < δ) :
@@ -176,6 +194,8 @@ theorem cnfAddMonomial_exponents_lt
           simpa [cnfAddMonomial, hγe] using he
         · simpa [cnfAddMonomial, hγe, hγeqe] using hγ
 
+/-- Identifies the final exponent after adding a monomial; used to control
+subsequent extensions of the constructed CNF list. -/
 theorem cnfAddMonomial_lastExponent
     (l : List (Ordinal.{u} × Ordinal.{u})) (γ d : Ordinal.{u}) :
     ((cnfAddMonomial l γ d).getLast?.map Prod.fst).getD 0 = γ := by
@@ -204,6 +224,8 @@ theorem cnfAddMonomial_lastExponent
           simp [cnfAddMonomial]
         · simp [cnfAddMonomial, hγδ, hγeqδ]
 
+/-- Reduces monomial insertion to list append when its exponent is below all
+existing exponents; used in the strict-extension construction. -/
 theorem cnfAddMonomial_eq_append_of_lt_all
     (l : List (Ordinal.{u} × Ordinal.{u})) (γ d : Ordinal.{u})
     (hγ : ∀ p ∈ l, γ < p.1) :
@@ -215,6 +237,8 @@ theorem cnfAddMonomial_eq_append_of_lt_all
       simp only [cnfAddMonomial, hγp, ↓reduceIte, List.cons_append]
       rw [ih (fun q hq ↦ hγ q (List.mem_cons_of_mem p hq))]
 
+/-- Proves that monomial insertion preserves CNF validity; this allows its
+value to be recognized by Mathlib's canonical CNF operation. -/
 theorem cnfAddMonomial_valid
     (l : List (Ordinal.{u} × Ordinal.{u}))
     (hsorted : (l.map Prod.fst).Pairwise (fun a b ↦ b < a))
@@ -268,6 +292,8 @@ theorem cnfAddMonomial_valid
           simp [cnfAddMonomial, hsumpos, hsumlt]
         · simp [cnfAddMonomial, hγδ, hγeqδ, hdpos, hdlt]
 
+/-- Identifies the canonical CNF of a value with one added monomial; used to
+construct explicit CNF extensions. -/
 theorem CNF_cnfValue_add_monomial
     (l : List (Ordinal.{u} × Ordinal.{u}))
     (hsorted : (l.map Prod.fst).Pairwise (fun a b ↦ b < a))
@@ -281,6 +307,8 @@ theorem CNF_cnfValue_add_monomial
     cnfAddMonomial_valid l hsorted hpos hlt γ d hdpos hdlt
   exact CNF_cnfValue _ hsorted' hpos' hlt'
 
+/-- Adds a common head to a one-step CNF extension; used to lift extensions
+through arbitrary common prefixes. -/
 theorem CNFStep.cons_prefix
     {pre : List (Ordinal.{u} × Ordinal.{u})}
     {x y : Ordinal.{u} × Ordinal.{u}} {δ e : Ordinal.{u}}
@@ -296,6 +324,8 @@ theorem CNFStep.cons_prefix
         · simp at hfalse
         · exact ⟨z, by simpa using hz, hyz⟩
 
+/-- Shows that adding a sufficiently small monomial gives a strict CNF-list
+extension; used to approximate ordinals from below. -/
 theorem CNFListLT_cnfAddMonomial
     (l : List (Ordinal.{u} × Ordinal.{u})) (hne : l ≠ [])
     (hsorted : (l.map Prod.fst).Pairwise (fun a b ↦ b < a))
@@ -361,6 +391,8 @@ theorem CNFListLT_cnfAddMonomial
                 by simp [cnfAddMonomial, hγδ, hγeqδ], ?_⟩
               exact Or.inr ⟨hδγ, Or.inl rfl⟩
 
+/-- Compares values of lists with the same valid prefix; used to show that
+CNF-list extension implies ordinary ordinal inequality. -/
 theorem cnfValue_append_lt_append
     (pre l l' : List (Ordinal.{u} × Ordinal.{u}))
     (h : cnfValue l < cnfValue l') :
@@ -371,6 +403,8 @@ theorem cnfValue_append_lt_append
       simp only [List.cons_append, cnfValue, List.foldr_cons]
       exact (add_lt_add_iff_left _).2 ih
 
+/-- Converts strict extension of canonical CNF lists into strict ordinal
+inequality; used throughout the ordinal-space construction. -/
 theorem CNFListLT.ordinal_lt {ζ ζ' : Ordinal.{u}}
     (h : CNFListLT (Ordinal.CNF Ordinal.omega0 ζ)
       (Ordinal.CNF Ordinal.omega0 ζ')) : ζ < ζ' := by
@@ -410,6 +444,8 @@ theorem CNFListLT.ordinal_lt {ζ ζ' : Ordinal.{u}}
   rw [hζ, hζ']
   exact cnfValue_append_lt_append pre _ _ hdiv
 
+/-- Equates the ordinal definition of `cnfExtensionLT` with its list model;
+this bridge supplies transitivity and upper-cone linearity. -/
 theorem cnfExtensionLT_iff_CNFListLT {ζ ζ' : Ordinal.{u}} :
     cnfExtensionLT ζ ζ' ↔
       CNFListLT (Ordinal.CNF Ordinal.omega0 ζ)
@@ -432,6 +468,8 @@ theorem cnfExtensionLT_iff_CNFListLT {ζ ζ' : Ordinal.{u}} :
       · exact Or.inl rfl
       · exact Or.inr ⟨δ, e, hlast, hγδ⟩
 
+/-- Appending one smaller singleton monomial creates a strict CNF extension;
+used in the later Gao-stage approximation argument. -/
 theorem cnfExtensionLT_add_singleton_of_last
     {ζ q γ d β c : Ordinal.{u}}
     {pre : List (Ordinal.{u} × Ordinal.{u})}
@@ -468,6 +506,8 @@ theorem cnfExtensionLT_add_singleton_of_last
   exact CNFListLT_cnfAddMonomial l hlne hsorted hpos hlt β c hlast
     γ d hdpos hβγ
 
+/-- Proves transitivity for one-step extensions sharing a prefix; used in the
+global transitivity proof for `CNFListLT`. -/
 theorem CNFStep.trans {pre : List (Ordinal.{u} × Ordinal.{u})}
     {x y z : Ordinal.{u} × Ordinal.{u}}
     (hxy : CNFStep pre x y) (hyz : CNFStep pre y z) : CNFStep pre x z := by
@@ -480,6 +520,8 @@ theorem CNFStep.trans {pre : List (Ordinal.{u} × Ordinal.{u})}
     · exact Or.inr ⟨w, hw, by simpa only [hyz.1] using hb⟩
   · exact Or.inr ⟨hxy.1.trans hyz.1, hyz.2⟩
 
+/-- Establishes comparability of two one-step extensions above a common
+prefix; used to linearize each upper cone. -/
 theorem CNFStep.trichotomy {pre : List (Ordinal.{u} × Ordinal.{u})}
     {x y z : Ordinal.{u} × Ordinal.{u}}
     (hxy : CNFStep pre x y) (hxz : CNFStep pre x z) :
@@ -505,6 +547,8 @@ theorem CNFStep.trichotomy {pre : List (Ordinal.{u} × Ordinal.{u})}
       · exact Or.inr (Or.inr (Or.inl ⟨rfl, hed⟩))
     · exact Or.inr (Or.inr (Or.inr ⟨hδγ, hγ⟩))
 
+/-- Lifts one-step transitivity to the transitive closure `CNFListLT`; used to
+prove that `cnfExtensionLE` is a partial order. -/
 theorem CNFListLT.trans {l m n : List (Ordinal.{u} × Ordinal.{u})}
     (hlm : CNFListLT l m) (hmn : CNFListLT m n) : CNFListLT l n := by
   rcases hlm with ⟨p, t, x, y, hl, hm, hxy⟩
@@ -536,6 +580,8 @@ theorem CNFListLT.trans {l m n : List (Ordinal.{u} × Ordinal.{u})}
       refine ⟨q, r ++ x :: t, w, z, ?_, hn, hyz⟩
       simpa only [List.cons_append, List.append_assoc] using hl
 
+/-- Shows that two CNF lists extending a fixed list are comparable; used for
+linearity of upper cones in the ordinal extension order. -/
 theorem CNFListLT.upper_trichotomy
     {l m n : List (Ordinal.{u} × Ordinal.{u})}
     (hlm : CNFListLT l m) (hln : CNFListLT l n) :
@@ -657,6 +703,8 @@ theorem cnfExtensionLT_linear_above (ζ : Ordinal.{u}) :
     · exact cnfExtensionLT_iff_CNFListLT.mpr h
     · exact ((CNFListLT.ordinal_lt h).asymm hlt).elim
 
+/-- Includes equality in upper-cone comparability; used when minimal Gao
+dominators must be compared in `StageFormula`. -/
 theorem cnfExtensionLE_linear_above (ζ : Ordinal.{u})
     {η η' : Ordinal.{u}} (hη : cnfExtensionLE ζ η)
     (hη' : cnfExtensionLE ζ η') :

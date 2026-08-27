@@ -35,6 +35,8 @@ noncomputable def finiteBandProjection (n : ℕ) (Λ : Finset (TreeBandIndex n))
     classical
     exact w.filter fun t ↦ ∃ B ∈ Λ, t ∈ treeBandSupport n B
 
+/-- Assigns a node to the root band or the sibling band indexed by its parent;
+used to define the finite band partition pointwise. -/
 noncomputable def treeBandOfNode (n : ℕ) (t : TreeNode n) : TreeBandIndex n :=
   by
     classical
@@ -50,6 +52,8 @@ noncomputable def treeBandOfNode (n : ℕ) (t : TreeNode n) : TreeBandIndex n :=
         have htn : TreeNode.level t ≤ n := t.2
         omega⟩
 
+/-- Assigns every node to its canonical root or sibling band; used to partition
+coefficient supports. -/
 theorem node_mem_its_treeBand (n : ℕ) (t : TreeNode n) :
     t ∈ treeBandSupport n (treeBandOfNode n t) := by
   classical
@@ -57,6 +61,8 @@ theorem node_mem_its_treeBand (n : ℕ) (t : TreeNode n) :
   · simp [treeBandOfNode, h, treeBandSupport]
   · simp [treeBandOfNode, h, treeBandSupport]
 
+/-- Recovers the canonical band from membership in a band support; used to
+prove uniqueness in the band partition. -/
 theorem treeBandOfNode_eq_of_mem (n : ℕ) (t : TreeNode n)
     (B : TreeBandIndex n) (ht : t ∈ treeBandSupport n B) :
     treeBandOfNode n t = B := by
@@ -70,6 +76,8 @@ theorem treeBandOfNode_eq_of_mem (n : ℕ) (t : TreeNode n)
         simpa [treeBandSupport] using ht
       simp [treeBandOfNode, ht'.2, ht'.1]
 
+/-- Characterizes when a band projection has nonempty support; used to define
+and track recurrent bands. -/
 theorem treeBandProjection_support_nonempty_iff (n : ℕ)
     (B : TreeBandIndex n) (w : TreeCoefficients n) :
     (treeBandProjection n B w).support.Nonempty ↔
@@ -86,11 +94,15 @@ theorem treeBandProjection_support_nonempty_iff (n : ℕ)
     rw [htB] at htmem
     simp [treeBandProjection, htw, htmem]
 
+/-- The finite set of canonical bands meeting the support of `w`; used by the
+subsequence recursion in `tree_thinning`. -/
 noncomputable def bandsAt (n : ℕ) (w : TreeCoefficients n) :
     Finset (TreeBandIndex n) := by
   classical
   exact w.support.image (treeBandOfNode n)
 
+/-- Characterizes the finite set of bands occurring in a coefficient vector;
+used in the thinning recursion. -/
 theorem mem_bandsAt_iff (n : ℕ) (w : TreeCoefficients n)
     (B : TreeBandIndex n) :
     B ∈ bandsAt n w ↔ (treeBandProjection n B w).support.Nonempty := by
@@ -98,6 +110,8 @@ theorem mem_bandsAt_iff (n : ℕ) (w : TreeCoefficients n)
   rw [treeBandProjection_support_nonempty_iff]
   simp [bandsAt, eq_comm]
 
+/-- Gives the pointwise formula for projection onto finitely many bands; used
+to decompose coefficients in trimming and moderatedness. -/
 theorem finiteBandProjection_apply (n : ℕ) (Λ : Finset (TreeBandIndex n))
     (w : TreeCoefficients n) (t : TreeNode n) :
     (treeBandOfNode n t ∈ Λ → finiteBandProjection n Λ w t = w t) ∧
@@ -112,6 +126,8 @@ theorem finiteBandProjection_apply (n : ℕ) (Λ : Finset (TreeBandIndex n))
     rintro ⟨B, hBΛ, htB⟩
     exact hB (treeBandOfNode_eq_of_mem n t B htB ▸ hBΛ)
 
+/-- Expresses the mass of a finite band projection as a finite sum; used for
+tail-mass estimates in the trimming lemma. -/
 theorem treeRho_finiteBandProjection (n : ℕ)
     (Λ : Finset (TreeBandIndex n)) (w : TreeCoefficients n) :
     treeRho n (finiteBandProjection n Λ w) =
@@ -162,10 +178,14 @@ theorem treeRho_finiteBandProjection (n : ℕ)
     rw [treeBandProjection, Finsupp.filter_apply_neg _ _ hnot]
     simp
 
+/-- Chooses the root or parent node representing a band; used to define the
+upshift of all coefficients in that band. -/
 noncomputable def treeBandParent (n : ℕ) : TreeBandIndex n → TreeNode n
   | none => TreeNode.root n
   | some u => u.1
 
+/-- Identifies a nonroot node's parent with the representative of its band;
+used to analyze the support of the upshift. -/
 theorem parent_eq_treeBandParent (n : ℕ) (t : TreeNode n) :
     TreeNode.parent t = treeBandParent n (treeBandOfNode n t) := by
   classical
@@ -178,11 +198,15 @@ theorem parent_eq_treeBandParent (n : ℕ) (t : TreeNode n) :
 noncomputable def treeUpshift (n : ℕ) (w : TreeCoefficients n) : TreeCoefficients n :=
   w.mapDomain TreeNode.parent
 
+/-- The finite set of representative parents of a finite band family; used to
+bound the support of upshifted coefficients. -/
 noncomputable def treeBandParents (n : ℕ)
     (Λ : Finset (TreeBandIndex n)) : Finset (TreeNode n) := by
   classical
   exact Λ.image (treeBandParent n)
 
+/-- Bounds the support of an upshift by the finite set of band parents; used
+to obtain a finite-dimensional convergent subsequence. -/
 theorem treeUpshift_support_subset_bandParents (n : ℕ)
     (Λ : Finset (TreeBandIndex n)) (w : TreeCoefficients n) :
     (treeUpshift n (finiteBandProjection n Λ w)).support ⊆
@@ -200,6 +224,8 @@ theorem treeUpshift_support_subset_bandParents (n : ℕ)
   have hzero := (finiteBandProjection_apply n Λ w t).2 hnot
   exact Finsupp.mem_support_iff.mp htfinite hzero
 
+/-- Compares the weight of a parent node with that of its child; used to bound
+the `treeRho` cost of upshifting. -/
 theorem treeParent_weight_le (n : ℕ) (t : TreeNode n) :
     (2 : ℝ) ^ (-(TreeNode.level (TreeNode.parent t) : ℤ)) ≤
       2 * (2 : ℝ) ^ (-(TreeNode.level t : ℤ)) := by
@@ -212,6 +238,8 @@ theorem treeParent_weight_le (n : ℕ) (t : TreeNode n) :
     rw [hz, zpow_add₀ (by norm_num)]
     simp [mul_comm]
 
+/-- Shows that a node cylinder lies inside its parent cylinder; used to prove
+that upshifting increases the associated tree operator. -/
 theorem treeCylinder_subset_parent (n : ℕ) (t : TreeNode n) :
     treeCylinder n t ⊆ treeCylinder n (TreeNode.parent t) := by
   intro α hα j
@@ -235,6 +263,8 @@ theorem treeCylinder_subset_parent (n : ℕ) (t : TreeNode n) :
   rw [hpref, hget]
   exact hj
 
+/-- Converts cylinder inclusion into domination by the parent tree function;
+used in `treeUpshift_basic`. -/
 theorem treeFunction_le_parent (n : ℕ) (t : TreeNode n) :
     treeFunction n t ≤ treeFunction n (TreeNode.parent t) := by
   intro α
@@ -280,6 +310,8 @@ theorem treeUpshift_basic (n : ℕ) (w : TreeCoefficients n) (hw : 0 ≤ w) :
     change w t * treeFunction n t α ≤ w t * treeFunction n (TreeNode.parent t) α
     exact mul_le_mul_of_nonneg_left (treeFunction_le_parent n t α) (hw t)
 
+/-- A single band projection cannot increase `treeRho`; used to uniformly
+bound each coordinate in the sharp-subsequence extraction. -/
 theorem treeRho_bandProjection_le (n : ℕ) (B : TreeBandIndex n)
     (w : TreeCoefficients n) :
     treeRho n (treeBandProjection n B w) ≤ treeRho n w := by
@@ -296,6 +328,8 @@ theorem treeRho_bandProjection_le (n : ℕ) (B : TreeBandIndex n)
   intro t _ _
   exact mul_nonneg (zpow_nonneg (by norm_num) _) (abs_nonneg _)
 
+/-- A projection onto finitely many bands cannot increase `treeRho`; used in
+the coefficient decomposition for `component_moderated`. -/
 theorem treeRho_finiteBandProjection_le (n : ℕ)
     (Λ : Finset (TreeBandIndex n)) (w : TreeCoefficients n) :
     treeRho n (finiteBandProjection n Λ w) ≤ treeRho n w := by
@@ -323,6 +357,8 @@ theorem treeRho_finiteBandProjection_le (n : ℕ)
   intro t _ _
   exact mul_nonneg (zpow_nonneg (by norm_num) _) (abs_nonneg _)
 
+/-- Bounds the total mass of any finite band family by the original mass;
+used to prove summability of limiting band masses in `tree_trim`. -/
 theorem sum_treeRho_bandProjection_le (n : ℕ)
     (Λ : Finset (TreeBandIndex n)) (w : TreeCoefficients n) :
     ∑ B ∈ Λ, treeRho n (treeBandProjection n B w) ≤ treeRho n w := by
@@ -361,12 +397,16 @@ theorem tree_sharp_subsequence
 def recurrentBands (n : ℕ) (w : ℕ → TreeCoefficients n) : Set (TreeBandIndex n) :=
   {B | Set.Infinite {m | (treeBandProjection n B (w m)).support.Nonempty}}
 
+/-- Records a final support occurrence for each nonrecurrent band; used to
+construct a subsequence in which transient bands occur at most once. -/
 noncomputable def lastBandOccurrence (n : ℕ)
     (w : ℕ → TreeCoefficients n) (B : TreeBandIndex n) : ℕ := by
   classical
   let S : Set ℕ := {m | (treeBandProjection n B (w m)).support.Nonempty}
   exact if h : S.Finite then h.toFinset.sup id else 0
 
+/-- Bounds every occurrence of a nonrecurrent band by its recorded last index;
+used to choose a subsequence with transient bands occurring at most once. -/
 theorem le_lastBandOccurrence (n : ℕ) (w : ℕ → TreeCoefficients n)
     (B : TreeBandIndex n)
     (hfinite : {m | (treeBandProjection n B (w m)).support.Nonempty}.Finite)

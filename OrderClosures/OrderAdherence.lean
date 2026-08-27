@@ -193,6 +193,8 @@ theorem OrderConvergesTo.uoConvergesTo {ι : Type v} [Preorder ι]
   simpa [inf_eq_left.mpr ha] using hinf
 
 omit [IsOrderedAddMonoid X] [VectorLattice X] in
+/-- Converts domination by an order-null net into order convergence to zero;
+used to pass from uo-convergence to convergence of lattice clamps. -/
 private theorem orderConvergesTo_zero_of_abs_le {ι : Type v} [Preorder ι]
     {f g : ι → X} (hg : OrderConvergesTo g 0) (hfg : ∀ i, |f i| ≤ |g i|) :
     OrderConvergesTo f 0 := by
@@ -203,6 +205,8 @@ private theorem orderConvergesTo_zero_of_abs_le {ι : Type v} [Preorder ι]
     simpa using (hfg i).trans (by simpa using hi)
 
 omit [VectorLattice X] in
+/-- Bounds the change of a lattice clamp by the clamped difference; used by
+`UOConvergesTo.clamp` to obtain its controlling order-null net. -/
 private theorem abs_clamp_le (x a : X) (ha : 0 ≤ a) :
     |(x ⊓ a) ⊔ (-a)| ≤ a := by
   apply (abs_le').2
@@ -210,6 +214,8 @@ private theorem abs_clamp_le (x a : X) (ha : 0 ≤ a) :
     by simpa using neg_le_neg (show -a ≤ (x ⊓ a) ⊔ (-a) from le_sup_right)⟩
 
 omit [VectorLattice X] in
+/-- Shows that clamping a uo-convergent net to a fixed order interval gives
+order convergence; this is the key reduction in the adherence comparison. -/
 private theorem UOConvergesTo.clamp {ι : Type v} [Preorder ι]
     [IsDirected ι (· ≤ ·)] [Nonempty ι] {f : ι → X} {x : X}
     (h : UOConvergesTo f x) (a : X) (ha : 0 ≤ a) :
@@ -387,6 +393,8 @@ structure PaperLatticeNorm (X : Type u) [AddCommGroup X] [Lattice X]
   smul : ∀ (a : ℝ) x, toFun (a • x) = |a| * toFun x
   solid : ∀ {x y}, |x| ≤ |y| → toFun x ≤ toFun y
 
+/-- Allows a bundled paper lattice norm to be applied as a function; used by
+all subsequent Fatou and norm-comparison statements. -/
 instance : CoeFun (PaperLatticeNorm X) (fun _ ↦ X → ℝ) := ⟨PaperLatticeNorm.toFun⟩
 
 /-- Sequential completeness for the metric induced by `p`. -/

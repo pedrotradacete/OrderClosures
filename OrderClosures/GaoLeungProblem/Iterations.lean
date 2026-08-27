@@ -12,8 +12,8 @@ universe u v
 
 section OrdinalConstruction
 
-/-- Paper Theorem `thm:solid-iterations`. Here `κ⁺` is represented by the
-initial ordinal of the successor cardinal. -/
+/-- The canonical transfinite tower obtained by iterating order adherence;
+used as the tower field of the final global construction. -/
 noncomputable def canonicalOrderAdherenceTower
     {X : Type v} [AddCommGroup X] [Lattice X] [IsOrderedAddMonoid X]
     [VectorLattice X] (A : Set X) : OrderAdherenceTower A where
@@ -27,19 +27,28 @@ noncomputable def canonicalOrderAdherenceTower
     ext x
     simp
 
+/-- A successor-indexed generator type for one Gao component; used to enumerate
+the initial component stage with controlled cardinality. -/
 abbrev GaoSuccessorGenerator (β : Ordinal.{u}) :=
   {ζ : GaoIndex β // ζ ∈ GaoStageIndices β 1}
 
+/-- Indices for all Gao components below the successor cardinal of `κ`; used
+as the coordinate type of the global product. -/
 abbrev GaoComponentIndex (κ : Cardinal.{u}) :=
   Set.Iio (Cardinal.ord (Order.succ κ))
 
+/-- The continuous-function lattice attached to one Gao ordinal component. -/
 abbrev GaoComponent (β : Ordinal.{u}) :=
   C(GaoCompactSpace β, ℝ)
 
+/-- The padded dependent product containing every required Gao component;
+used for the global arbitrary-iteration witness. -/
 abbrev GaoIterationProduct (κ : Cardinal.{u}) :=
   (∀ β : GaoComponentIndex κ, GaoComponent β.1) ×
     (ULift.{u + 1, u} (Cardinal.ord κ).ToType → ℝ)
 
+/-- Supplies pointwise order compatibility with addition on the iteration
+product. -/
 instance (κ : Cardinal.{u}) : IsOrderedAddMonoid (GaoIterationProduct κ) where
   add_le_add_left a b hab c := by
     constructor
@@ -48,6 +57,8 @@ instance (κ : Cardinal.{u}) : IsOrderedAddMonoid (GaoIterationProduct κ) where
     · intro i
       simpa [add_comm] using add_le_add_right (hab.2 i) (c.2 i)
 
+/-- Supplies monotonicity of nonnegative scalar multiplication on the iteration
+product, needed for its vector-lattice structure. -/
 instance (κ : Cardinal.{u}) : PosSMulMono ℝ (GaoIterationProduct κ) where
   smul_le_smul_of_nonneg_left a ha b₁ b₂ hbc := by
     constructor
@@ -58,17 +69,24 @@ instance (κ : Cardinal.{u}) : PosSMulMono ℝ (GaoIterationProduct κ) where
     · intro i
       exact smul_le_smul_of_nonneg_left (hbc.2 i) ha
 
+/-- Bundles the pointwise vector-lattice structure on the padded product. -/
 noncomputable instance (κ : Cardinal.{u}) : VectorLattice (GaoIterationProduct κ) where
 
+/-- Computes absolute value in the component part of the iteration product;
+used to analyze solid domination of global generators. -/
 theorem gaoIterationProduct_abs_fst
     (κ : Cardinal.{u}) (x : GaoIterationProduct κ) (β : GaoComponentIndex κ) :
     |x|.1 β = |x.1 β| := rfl
 
+/-- Computes absolute value in the padding coordinate of the iteration
+product; used to recover generator indices from domination. -/
 theorem gaoIterationProduct_abs_snd
     (κ : Cardinal.{u}) (x : GaoIterationProduct κ)
     (a : ULift.{u + 1, u} (Cardinal.ord κ).ToType) :
     |x|.2 a = |x.2 a| := rfl
 
+/-- Bounds the cardinality of the chosen successor-generator type; used to
+fit all component generators into the global cardinal `κ`. -/
 theorem mk_gaoSuccessorGenerator_le
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : Ordinal.{u}) (hβ : β < Cardinal.ord (Order.succ κ)) :
@@ -100,6 +118,8 @@ theorem mk_gaoSuccessorGenerator_le
     _ = Cardinal.lift.{u + 1, u} bound.card := Cardinal.mk_Iio_ordinal bound
     _ ≤ Cardinal.lift.{u + 1, u} κ := Cardinal.lift_le.mpr hboundcard
 
+/-- Embeds a successor-stage generator into the corresponding continuous-
+function component; used to form the global diagonal family. -/
 noncomputable def gaoGeneratorEmbedding
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : Ordinal.{u}) (hβ : β < Cardinal.ord (Order.succ κ)) :
@@ -111,6 +131,8 @@ noncomputable def gaoGeneratorEmbedding
   rw [Cardinal.mk_ord_toType]
   exact mk_gaoSuccessorGenerator_le κ hκ β hβ
 
+/-- Adds the padding coordinate to a component generator so different indices
+remain distinguishable under solid domination. -/
 noncomputable def gaoComponentGenerator
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : GaoComponentIndex κ)
@@ -121,6 +143,8 @@ noncomputable def gaoComponentGenerator
       ordinalProjection β.1 (Classical.choose h).1
     else 0
 
+/-- Evaluates a component generator after embedding into the padded product;
+used to relate global generators to their Gao coordinates. -/
 theorem gaoComponentGenerator_embedding
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : GaoComponentIndex κ) (ζ : GaoSuccessorGenerator β.1) :
@@ -136,20 +160,28 @@ theorem gaoComponentGenerator_embedding
             gaoGeneratorEmbedding κ hκ β.1 β.2 η =
               gaoGeneratorEmbedding κ hκ β.1 β.2 ζ from ⟨ζ, rfl⟩)))
 
+/-- The diagonal generator in the full product for a fixed cardinal index;
+its range generates the global solid set. -/
 noncomputable def gaoGlobalGenerator
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (a : ULift.{u + 1, u} (Cardinal.ord κ).ToType) : GaoIterationProduct κ :=
   (fun β ↦ gaoComponentGenerator κ hκ β a,
     fun b ↦ if b = a then (1 : ℝ) else 0)
 
+/-- Projection from the global product to one continuous-function component;
+used to transfer adherence membership downward. -/
 def gaoProductProjection (κ : Cardinal.{u}) (β : GaoComponentIndex κ) :
     GaoIterationProduct κ → GaoComponent β.1 := fun x ↦ x.1 β
 
+/-- Single-coordinate inclusion of a Gao component into the padded product;
+used to lift adherence witnesses upward. -/
 noncomputable def gaoProductInclusion
     (κ : Cardinal.{u}) (β : GaoComponentIndex κ) :
     GaoComponent β.1 → GaoIterationProduct κ := fun x ↦
   (Pi.single β x, 0)
 
+/-- Shows that coordinate projection preserves order convergence; used to
+project every global adherence stage to its component stage. -/
 theorem orderConvergesTo_gaoProductProjection
     (κ : Cardinal.{u}) (β : GaoComponentIndex κ)
     {i : Type v} [Preorder i] {f : i → GaoIterationProduct κ}
@@ -186,6 +218,8 @@ theorem orderConvergesTo_gaoProductProjection
   · intro k
     exact (hbound k).mono fun j hj ↦ hj.1 β
 
+/-- Shows that single-coordinate inclusion preserves order convergence; used
+to lift component adherence witnesses into the global product. -/
 theorem orderConvergesTo_gaoProductInclusion
     (κ : Cardinal.{u}) (β : GaoComponentIndex κ)
     {i : Type v} [Preorder i] {f : i → GaoComponent β.1}
@@ -255,6 +289,8 @@ theorem orderConvergesTo_gaoProductInclusion
         change |((0 : ULift.{u + 1, u} (Cardinal.ord κ).ToType → ℝ) a - 0)| ≤ 0
         simp
 
+/-- Transfers membership in order adherence through product projection; used
+in the inductive comparison of global and component stages. -/
 theorem gaoProductProjection_orderAdherence
     (κ : Cardinal.{u}) (β : GaoComponentIndex κ) (A : Set (GaoIterationProduct κ)) :
     gaoProductProjection κ β '' orderAdherence A ⊆
@@ -263,6 +299,8 @@ theorem gaoProductProjection_orderAdherence
   exact ⟨i, hpre, hdir, hne, fun j ↦ gaoProductProjection κ β (f j),
     fun j ↦ ⟨f j, hfA j, rfl⟩, orderConvergesTo_gaoProductProjection κ β hfx⟩
 
+/-- Transfers component order-adherence membership through coordinate
+inclusion; used for the reverse stage comparison. -/
 theorem gaoProductInclusion_orderAdherence
     (κ : Cardinal.{u}) (β : GaoComponentIndex κ) (A : Set (GaoComponent β.1)) :
     gaoProductInclusion κ β '' orderAdherence A ⊆
@@ -271,10 +309,14 @@ theorem gaoProductInclusion_orderAdherence
   exact ⟨i, hpre, hdir, hne, fun j ↦ gaoProductInclusion κ β (f j),
     fun j ↦ ⟨f j, hfA j, rfl⟩, orderConvergesTo_gaoProductInclusion κ β hfx⟩
 
+/-- The solid hull of the global diagonal generator range; this is the set
+whose adherence tower has the prescribed length. -/
 noncomputable def gaoIterationSet
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ) : Set (GaoIterationProduct κ) :=
   solidHull (Set.range (gaoGlobalGenerator κ hκ))
 
+/-- Places each embedded component generator in the global solid generator
+set; this initializes the stage-inclusion induction. -/
 theorem gaoComponentGenerator_mem
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : GaoComponentIndex κ)
@@ -301,6 +343,8 @@ theorem gaoComponentGenerator_mem
       split_ifs <;> norm_num
     simpa using hnonneg
 
+/-- Proves the initial projection inclusion between the global set and a Gao
+component; used as the base case of `gaoProjection_stage`. -/
 theorem gaoProjection_initial
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : GaoComponentIndex κ) :
@@ -309,6 +353,8 @@ theorem gaoProjection_initial
   apply isSolid_gaoStageSet β.1 1 (gaoComponentGenerator_mem κ hκ β a)
   simpa [gaoProductProjection, gaoGlobalGenerator] using hx.1 β
 
+/-- Proves the initial inclusion of a component Gao stage into the global
+solid set; used as the base case of `gaoInclusion_stage`. -/
 theorem gaoInclusion_initial
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : GaoComponentIndex κ) :
@@ -342,6 +388,8 @@ theorem gaoInclusion_initial
     simp only [gaoProductInclusion, gaoGlobalGenerator, Pi.zero_apply]
     simp
 
+/-- Propagates the projection inclusion through every adherence stage; used
+to transfer component strictness to the global tower. -/
 theorem gaoProjection_stage
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : GaoComponentIndex κ) : ∀ η : Ordinal.{u + 1},
@@ -368,6 +416,8 @@ theorem gaoProjection_stage
       apply Set.mem_iUnion.mpr
       exact ⟨δ, ih δ.1 δ.2 ⟨x, hxδ, rfl⟩⟩
 
+/-- Propagates component inclusion through every adherence stage; paired with
+`gaoProjection_stage` to compare the two towers. -/
 theorem gaoInclusion_stage
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     (β : GaoComponentIndex κ) : ∀ η : Ordinal.{u + 1},
@@ -394,6 +444,8 @@ theorem gaoInclusion_stage
       apply Set.mem_iUnion.mpr
       exact ⟨δ, ih δ.1 δ.2 ⟨x, hxδ, rfl⟩⟩
 
+/-- Supplies the ordinal successor inequality needed to choose the component
+whose strict stage witnesses a prescribed global stage. -/
 theorem one_add_le_add_one_ordinal (δ : Ordinal.{u}) :
     1 + δ ≤ δ + 1 := by
   induction δ using Ordinal.limitRecOn with
@@ -407,6 +459,8 @@ theorem one_add_le_add_one_ordinal (δ : Ordinal.{u}) :
       rw [Ordinal.one_add_of_omega0_le (Ordinal.omega0_le_of_isSuccLimit hδ)]
       exact le_self_add
 
+/-- Transfers strictness from a suitable Gao component to every stage below
+the target ordinal of the global iteration tower. -/
 theorem gaoIterationTower_strict
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ) :
     ∀ η < Ordinal.lift.{u + 1, u} (Cardinal.ord (Order.succ κ)),
@@ -458,6 +512,8 @@ theorem gaoIterationTower_strict
   rw [(canonicalOrderAdherenceTower (gaoIterationSet κ hκ)).stage_succ]
   exact subset_orderAdherence _ hx
 
+/-- Recovers equality of generator indices from solid domination; used to
+prove injectivity of the global generator map. -/
 theorem gaoGlobalGenerator_index_eq_of_abs_le
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ)
     {a b : ULift.{u + 1, u} (Cardinal.ord κ).ToType}
@@ -470,6 +526,8 @@ theorem gaoGlobalGenerator_index_eq_of_abs_le
   simp [gaoGlobalGenerator, hne] at h
   norm_num at h
 
+/-- Proves that distinct indices give distinct global generators; used for the
+lower bound on the generator cardinal. -/
 theorem gaoGlobalGenerator_injective
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ) :
     Function.Injective (gaoGlobalGenerator κ hκ) := by
@@ -477,6 +535,8 @@ theorem gaoGlobalGenerator_injective
   apply gaoGlobalGenerator_index_eq_of_abs_le κ hκ
   rw [hab]
 
+/-- Computes the cardinality of the global generator range; used in the exact
+calculation of `solidGeneratorNumber`. -/
 theorem mk_gaoGlobalGenerator_range
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ) :
     Cardinal.mk (Set.range (gaoGlobalGenerator κ hκ)) =
@@ -490,6 +550,8 @@ theorem mk_gaoGlobalGenerator_range
         (Cardinal.mk (Cardinal.ord κ).ToType) = Cardinal.lift.{u + 1, u} κ
       rw [Cardinal.mk_ord_toType]
 
+/-- Proves that the constructed solid set has generator number exactly `κ`;
+used in the final arbitrary-iteration theorem. -/
 theorem solidGeneratorNumber_gaoIterationSet
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ) :
     solidGeneratorNumber (gaoIterationSet κ hκ) = Cardinal.lift.{u + 1, u} κ := by
@@ -545,6 +607,8 @@ theorem solidGeneratorNumber_gaoIterationSet
           rw [Cardinal.mk_ord_toType]
         _ ≤ Cardinal.mk A := Cardinal.mk_le_of_injective hxinj
 
+/-- Paper Theorem `thm:solid-iterations`: constructs solid sets requiring any
+prescribed admissible number of order-adherence iterations. -/
 theorem solid_sets_require_arbitrarily_many_iterations
     (κ : Cardinal.{u}) (hκ : Cardinal.aleph0 ≤ κ) (ξ : Ordinal.{u})
     (hξ : ξ ≤ Cardinal.ord (Order.succ κ)) :
@@ -562,6 +626,8 @@ theorem solid_sets_require_arbitrarily_many_iterations
   exact gaoIterationTower_strict κ hκ η
     (hη.trans_le (Ordinal.lift_le.mpr hξ))
 
+/-- Converts an absolute-value bound by an order-null net into order
+convergence to zero; used in `solid_generated_orderAdherence`. -/
 theorem orderConvergesTo_zero_of_abs_le_gao
     {X : Type u} [AddCommGroup X] [Lattice X] [IsOrderedAddMonoid X]
     {i : Type v} [Preorder i] {f g : i → X}

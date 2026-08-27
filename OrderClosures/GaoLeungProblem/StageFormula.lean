@@ -12,15 +12,21 @@ universe u v
 
 section OrdinalConstruction
 
+/-- Stage indices whose coordinate projections dominate a given function;
+used to select finite minimal dominators. -/
 def gaoDominators (ξ γ : Ordinal.{u})
     (b : C(GaoCompactSpace ξ, ℝ)) : Set (GaoIndex ξ) :=
   {ζ | ζ ∈ GaoStageIndices ξ γ ∧ b ≤ ordinalProjection ξ ζ}
 
+/-- Minimal elements of the dominator set in the CNF extension order; used to
+reduce a positive directed family to finitely many coordinates. -/
 def gaoMinimalDominators (ξ γ : Ordinal.{u})
     (b : C(GaoCompactSpace ξ, ℝ)) : Set (GaoIndex ξ) :=
   {μ | μ ∈ gaoDominators ξ γ b ∧
     ∀ η ∈ gaoDominators ξ γ b, cnfExtensionLE η.1 μ.1 → η = μ}
 
+/-- Extracts a coordinate projection dominating a positive Gao-stage element;
+this starts the finite-minimal-dominator reduction. -/
 theorem gaoDominators_nonempty
     (ξ γ : Ordinal.{u}) {b : C(GaoCompactSpace ξ, ℝ)}
     (hb0 : 0 ≤ b) (hb : b ∈ GaoStageSet ξ γ) :
@@ -29,6 +35,8 @@ theorem gaoDominators_nonempty
   refine ⟨ζ, hζ, ?_⟩
   simpa only [abs_of_nonneg hb0] using hbζ
 
+/-- Refines any dominator to a minimal one; used to replace arbitrary
+dominating coordinates by a finite canonical family. -/
 theorem gaoDominator_above_minimal
     (ξ γ : Ordinal.{u}) {b : C(GaoCompactSpace ξ, ℝ)}
     {ζ : GaoIndex ξ} (hζ : ζ ∈ gaoDominators ξ γ b) :
@@ -46,6 +54,8 @@ theorem gaoDominator_above_minimal
   have hηleμ := cnfExtensionLE_partialOrder_and_subrelation.2 hημ
   exact Subtype.ext (le_antisymm hηleμ (hμmin hηP hηleμ))
 
+/-- Shows that distinct minimal dominators are CNF-incomparable; used with the
+incomparable-projection infimum theorem. -/
 theorem gaoMinimalDominators_pairwise
     (ξ γ : Ordinal.{u}) (b : C(GaoCompactSpace ξ, ℝ)) :
     (gaoMinimalDominators ξ γ b).Pairwise
@@ -53,6 +63,8 @@ theorem gaoMinimalDominators_pairwise
   intro μ hμ ν hν hne hμν
   exact hne (hν.2 μ hμ.1 hμν)
 
+/-- Proves finiteness of the minimal dominator family; needed to combine it
+with directedness of the positive approximating set. -/
 theorem gaoMinimalDominators_finite
     (ξ γ : Ordinal.{u}) {b : C(GaoCompactSpace ξ, ℝ)}
     (hb0 : 0 ≤ b) (hbne : b ≠ 0) :
@@ -70,6 +82,8 @@ theorem gaoMinimalDominators_finite
   have hb_le_zero : b ≤ 0 := hglb.2 hbLower
   exact hbne (le_antisymm hb_le_zero hb0)
 
+/-- Produces one Gao-stage coordinate dominating an entire directed positive
+family; this is the main input to the forward adherence inclusion. -/
 theorem directedPositive_gaoStage_dominated
     (ξ γ : Ordinal.{u}) {z : C(GaoCompactSpace ξ, ℝ)}
     (hz : z ∈ directedPositiveAdherence (GaoStageSet ξ γ)) :
@@ -176,6 +190,8 @@ theorem directedPositive_gaoStage_dominated
     exact (hζfun b).1.1.2
   exact ⟨α, hale, hleast, hzα⟩
 
+/-- Establishes the forward inclusion for one order-adherence step by using a
+single coordinate dominator. -/
 theorem orderAdherence_gaoStage_subset
     (ξ γ : Ordinal.{u}) :
     orderAdherence (GaoStageSet ξ γ) ⊆ GaoStageSet ξ (γ + 1) := by
@@ -187,10 +203,14 @@ theorem orderAdherence_gaoStage_subset
   · exact hαleast.trans_lt (lt_add_one γ)
   · simpa only [abs_of_nonneg hz.1] using hzα
 
+/-- Singleton omega monomials with exponent below `γ`; used as the directed
+approximating family for a limit-stage coordinate. -/
 def singletonCNFBelow (γ : Ordinal.{u}) : Set (Ordinal.{u}) :=
   {q | ∃ δ d, Ordinal.CNF Ordinal.omega0 q = [(δ, d)] ∧
     q < Ordinal.omega0 ^ γ}
 
+/-- Shows that singleton CNF monomials below `γ` have supremum `ω^γ`; used to
+construct the reverse adherence approximation at limit exponents. -/
 theorem singletonCNFBelow_isLUB (γ : Ordinal.{u}) (hγ : γ ≠ 0) :
     IsLUB (singletonCNFBelow γ) (Ordinal.omega0 ^ γ) := by
   constructor
@@ -234,6 +254,8 @@ theorem singletonCNFBelow_isLUB (γ : Ordinal.{u}) (hγ : γ ≠ 0) :
         (lt_add_one (r / Ordinal.omega0 ^ δ))
     exact hrq.le.trans (hc ⟨δ, d + 1, hqcnf, hqpow⟩)
 
+/-- Turns a strict exponent inequality into a strict CNF extension of
+singleton monomials; used by `gaoIndex_approximation`. -/
 theorem singletonCNF_step_of_lt
     {q r δ d ε e : Ordinal.{u}}
     (hq : Ordinal.CNF Ordinal.omega0 q = [(δ, d)])
@@ -255,6 +277,8 @@ theorem singletonCNF_step_of_lt
     exact (not_le_of_gt (by rw [← hqeq, ← hreq]; exact hqr)) hmul
   · exact Or.inr hδε
 
+/-- Builds a directed family of earlier-stage indices whose projections order
+converge to a prescribed next-stage projection. -/
 theorem gaoIndex_approximation
     (ξ γ : Ordinal.{u}) (hγ : γ ≠ 0) (ζ : GaoIndex ξ)
     (hζbound : ζ.1 ≤ Ordinal.omega0 ^ ξ)
@@ -512,6 +536,8 @@ theorem gaoIndex_approximation
     exact hmap
   exact ⟨Z, hZne, hZstage, hZchain, hvalLUB⟩
 
+/-- Establishes the reverse inclusion for a successor Gao stage from the
+explicit coordinate approximations. -/
 theorem gaoStage_succ_subset_orderAdherence
     (ξ γ : Ordinal.{u}) (hγ : γ ≠ 0) :
     GaoStageSet ξ (γ + 1) ⊆ orderAdherence (GaoStageSet ξ γ) := by
@@ -565,6 +591,8 @@ theorem gaoStage_succ_subset_orderAdherence
     split_ifs <;> norm_num
   simpa only [abs_of_nonneg hnonneg] using hfζ
 
+/-- Packages both inclusions into the one-step Gao-stage formula; used by the
+transfinite induction in `gao_orderAdherence_stage_formula`. -/
 theorem orderAdherence_gaoStage
     (ξ γ : Ordinal.{u}) (hγ : γ ≠ 0) :
     orderAdherence (GaoStageSet ξ γ) = GaoStageSet ξ (γ + 1) :=

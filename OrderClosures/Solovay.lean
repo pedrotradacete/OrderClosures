@@ -24,18 +24,26 @@ namespace OrderClosures
 universe u
 
 
+/-- The regular-open completion of the open-set Boolean algebra, used as the
+complete Boolean algebra in Solovay's construction. -/
 abbrev RegularOpen (X : Type u) [TopologicalSpace X] :=
   Heyting.Regular (TopologicalSpace.Opens X)
 
+/-- Supplies arbitrary suprema and infima on regular open sets; required for
+complete-generation arguments below. -/
 noncomputable instance regularOpenCompleteLattice
     (X : Type u) [TopologicalSpace X] : CompleteLattice (RegularOpen X) :=
   Heyting.Regular.gi.liftCompleteLattice
 
+/-- Bundles the complete Boolean-algebra structure of regular open sets; used
+as the algebra whose Stone spectrum forms the counterexample. -/
 noncomputable instance regularOpenCompleteBooleanAlgebra
     (X : Type u) [TopologicalSpace X] : CompleteBooleanAlgebra (RegularOpen X) where
   __ := Heyting.Regular.instBooleanAlgebra
   __ := regularOpenCompleteLattice X
 
+/-- Regards a clopen set as a regular open element; used to turn finite
+cylinders into Boolean-algebra generators. -/
 def regularOpenOfClopen {X : Type u} [TopologicalSpace X]
     (s : Set X) (hs : IsClopen s) : RegularOpen X := by
   let U : TopologicalSpace.Opens X := ⟨s, hs.2⟩
@@ -56,6 +64,8 @@ def regularOpenOfClopen {X : Type u} [TopologicalSpace X]
     (((regularOpenOfClopen s hs : RegularOpen X) :
       TopologicalSpace.Opens X) : Set X) = s := rfl
 
+/-- Reduces equality of regular open sets to equality of carriers; used to
+simplify Boolean-algebra computations in the Solovay construction. -/
 theorem regularOpen_ext {X : Type u} [TopologicalSpace X]
     {U V : RegularOpen X}
     (h : (((U : TopologicalSpace.Opens X) : Set X)) =
@@ -63,12 +73,16 @@ theorem regularOpen_ext {X : Type u} [TopologicalSpace X]
   apply Heyting.Regular.coe_injective
   exact TopologicalSpace.Opens.ext h
 
+/-- Makes the regular-open constructor respect equality of clopen carriers;
+used when rewriting cylinder identities. -/
 theorem regularOpenOfClopen_congr {X : Type u} [TopologicalSpace X]
     {s t : Set X} (hs : IsClopen s) (ht : IsClopen t) (h : s = t) :
     regularOpenOfClopen s hs = regularOpenOfClopen t ht := by
   apply regularOpen_ext
   simpa only [coe_regularOpenOfClopen] using h
 
+/-- Computes intersections of clopen sets inside the regular-open algebra;
+used for finite cylinder meets and Boolean subalgebras. -/
 theorem regularOpenOfClopen_inf {X : Type u} [TopologicalSpace X]
     (s t : Set X) (hs : IsClopen s) (ht : IsClopen t) :
     regularOpenOfClopen (s ∩ t) (hs.inter ht) =
@@ -76,6 +90,8 @@ theorem regularOpenOfClopen_inf {X : Type u} [TopologicalSpace X]
   apply regularOpen_ext
   rfl
 
+/-- Computes complements of clopen sets inside the regular-open algebra;
+used to show the cylinder-generated family is a Boolean subalgebra. -/
 theorem regularOpenOfClopen_compl {X : Type u} [TopologicalSpace X]
     (s : Set X) (hs : IsClopen s) :
     regularOpenOfClopen sᶜ hs.compl = (regularOpenOfClopen s hs)ᶜ := by
@@ -98,6 +114,8 @@ theorem regularOpenOfClopen_compl {X : Type u} [TopologicalSpace X]
     hUV.compl_eq]
   rfl
 
+/-- Expresses a clopen union as a supremum of regular-open elements; used to
+derive the explicit Solovay generator formulas. -/
 theorem regularOpenOfClopen_eq_sSup {X : Type u} [TopologicalSpace X]
     (S : Set (RegularOpen X)) (t : Set X) (ht : IsClopen t)
     (hunion : t = ⋃ U ∈ S,
@@ -121,6 +139,8 @@ theorem regularOpenOfClopen_eq_sSup {X : Type u} [TopologicalSpace X]
     simp only [Set.mem_iUnion]
     exact ⟨U, hUS, hx⟩
 
+/-- Recovers a regular open set as the supremum of a family whose union is
+dense in it; used in the proof that the Solovay generators are complete. -/
 theorem regularOpen_eq_sSup_of_union {X : Type u} [TopologicalSpace X]
     (U : RegularOpen X) (S : Set (RegularOpen X))
     (hunion : (((U : TopologicalSpace.Opens X) : Set X)) = ⋃ V ∈ S,
@@ -152,23 +172,33 @@ section Solovay
 variable (Gamma : Type u) [LinearOrder Gamma] [TopologicalSpace Gamma]
   [DiscreteTopology Gamma]
 
+/-- The countable product of the well-ordered index type on which the Solovay
+cylinder algebra is constructed. -/
 abbrev SolovayProduct := ℕ → Gamma
 
+/-- The basic Solovay generator comparing coordinate `n` with `eta`; these
+generators will completely generate the regular-open algebra. -/
 def solovayA (n : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | f n = eta}
     ((isClopen_discrete {eta}).preimage (continuous_apply n))
 
+/-- The finite-coordinate cylinder through `g`; used as the topological basis
+recovered from the Solovay generators. -/
 def solovayCylinderSet (F : Finset ℕ) (g : SolovayProduct Gamma) :
     Set (SolovayProduct Gamma) :=
   ⋂ i ∈ F, {f | f i = g i}
 
 omit [LinearOrder Gamma] in
+/-- Shows that every finite-coordinate Solovay cylinder is clopen; this allows
+it to define an element of the regular-open Boolean algebra. -/
 theorem isClopen_solovayCylinderSet (F : Finset ℕ)
     (g : SolovayProduct Gamma) : IsClopen (solovayCylinderSet Gamma F g) := by
   apply isClopen_biInter_finset
   intro i hi
   exact (isClopen_discrete {g i}).preimage (continuous_apply i)
 
+/-- The regular-open element associated with a finite cylinder; used to prove
+complete generation of every regular open set. -/
 def solovayCylinder (F : Finset ℕ) (g : SolovayProduct Gamma) :
     RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen (solovayCylinderSet Gamma F g)
@@ -180,6 +210,8 @@ omit [LinearOrder Gamma] [TopologicalSpace Gamma] [DiscreteTopology Gamma] in
     f ∈ solovayCylinderSet Gamma F g ↔ ∀ i ∈ F, f i = g i := by
   simp [solovayCylinderSet]
 
+/-- Auxiliary coordinate-comparison element used to recover finite cylinders
+from the basic `solovayA` generators. -/
 def solovayB (m n : ℕ) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | f m ≤ f n}
     (by
@@ -189,14 +221,20 @@ def solovayB (m n : ℕ) : RegularOpen (SolovayProduct Gamma) :=
       exact (isClopen_discrete _).preimage
         ((continuous_apply m).prodMk (continuous_apply n)))
 
+/-- The regular-open event that coordinate `n` is strictly below `eta`; used
+in the Boolean identities for the generators. -/
 def solovayLT (n : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | f n < eta}
     ((isClopen_discrete {xi : Gamma | xi < eta}).preimage (continuous_apply n))
 
+/-- The regular-open event that coordinate `n` is at most `eta`; used in the
+well-founded recovery of exact coordinate values. -/
 def solovayLE (n : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | f n ≤ eta}
     ((isClopen_discrete {xi : Gamma | xi ≤ eta}).preimage (continuous_apply n))
 
+/-- Auxiliary comparison element combining two coordinates and a threshold;
+used in the recursive cylinder-generation identities. -/
 def solovayC (m n : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | f m < f n → f m < eta}
     (by
@@ -206,6 +244,8 @@ def solovayC (m n : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
       exact (isClopen_discrete _).preimage
         ((continuous_apply m).prodMk (continuous_apply n)))
 
+/-- The strict comparison event between two coordinates; isolated for reuse
+in the formulas for `solovayC` and `solovayBad`. -/
 def solovayStrict (m n : ℕ) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | f m < f n}
     (by
@@ -215,10 +255,14 @@ def solovayStrict (m n : ℕ) : RegularOpen (SolovayProduct Gamma) :=
       exact (isClopen_discrete _).preimage
         ((continuous_apply m).prodMk (continuous_apply n)))
 
+/-- The complement of a strict coordinate bound; used in exact-coordinate
+cylinder formulas. -/
 def solovayNotLT (m : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | ¬ f m < eta}
     ((isClopen_discrete {xi : Gamma | ¬ xi < eta}).preimage (continuous_apply m))
 
+/-- The exceptional part of a coordinate comparison; separated so it can be
+eliminated in the well-founded generator induction. -/
 def solovayBad (m n : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
   regularOpenOfClopen {f | f m < f n ∧ ¬ f m < eta}
     (by
@@ -228,10 +272,14 @@ def solovayBad (m n : ℕ) (eta : Gamma) : RegularOpen (SolovayProduct Gamma) :=
       exact (isClopen_discrete _).preimage
         ((continuous_apply m).prodMk (continuous_apply n)))
 
+/-- Closure predicate for a Boolean subalgebra under arbitrary suprema; used
+to formulate complete generation by the Solovay family. -/
 def IsCompleteBooleanSubalgebra {B : Type u} [CompleteBooleanAlgebra B]
     (L : BooleanSubalgebra B) : Prop :=
   ∀ S : Set B, S ⊆ L → sSup S ∈ L
 
+/-- Derives closure under arbitrary infima from closure under arbitrary
+suprema and complement; used repeatedly for the generated Boolean algebra. -/
 theorem IsCompleteBooleanSubalgebra.sInf_mem {B : Type u}
     [CompleteBooleanAlgebra B] {L : BooleanSubalgebra B}
     (hL : IsCompleteBooleanSubalgebra L) (S : Set B) (hSL : S ⊆ L) :
@@ -246,6 +294,8 @@ theorem IsCompleteBooleanSubalgebra.sInf_mem {B : Type u}
   ext x
   simp
 
+/-- Expresses the strict-order event as a supremum of basic generators; used
+to place it in every complete subalgebra containing `solovayA`. -/
 theorem solovayLT_eq_sSup (n : ℕ) (eta : Gamma) :
     solovayLT Gamma n eta =
       sSup (solovayA Gamma n '' Set.Iio eta) := by
@@ -253,6 +303,8 @@ theorem solovayLT_eq_sSup (n : ℕ) (eta : Gamma) :
   ext f
   simp [solovayA]
 
+/-- Computes the event that one coordinate is strictly below another; used in
+the recursive recovery of finite cylinders. -/
 theorem solovayStrict_eq (m n : ℕ) :
     solovayStrict Gamma m n = (solovayB Gamma n m)ᶜ := by
   unfold solovayB
@@ -261,6 +313,8 @@ theorem solovayStrict_eq (m n : ℕ) :
   ext f
   simp
 
+/-- Computes the complementary order event; used to build exact coordinate
+conditions from the Solovay generators. -/
 theorem solovayNotLT_eq (m : ℕ) (eta : Gamma) :
     solovayNotLT Gamma m eta = (solovayLT Gamma m eta)ᶜ := by
   unfold solovayLT
@@ -269,6 +323,8 @@ theorem solovayNotLT_eq (m : ℕ) (eta : Gamma) :
   ext f
   simp
 
+/-- Decomposes the exceptional comparison event into previously generated
+pieces; used in the induction recovering cylinder elements. -/
 theorem solovayBad_eq (m n : ℕ) (eta : Gamma) :
     solovayBad Gamma m n eta =
       solovayStrict Gamma m n ⊓ solovayNotLT Gamma m eta := by
@@ -277,6 +333,8 @@ theorem solovayBad_eq (m n : ℕ) (eta : Gamma) :
   apply regularOpenOfClopen_congr
   rfl
 
+/-- Gives the Boolean formula for the auxiliary comparison element `solovayC`;
+used to derive the non-strict order event. -/
 theorem solovayC_eq (m n : ℕ) (eta : Gamma) :
     solovayC Gamma m n eta = (solovayBad Gamma m n eta)ᶜ := by
   unfold solovayBad
@@ -285,6 +343,8 @@ theorem solovayC_eq (m n : ℕ) (eta : Gamma) :
   ext f
   simp
 
+/-- Expresses a non-strict coordinate bound as an infimum of comparison
+elements; used in the well-founded generator induction. -/
 theorem solovayLE_eq_sInf (n : ℕ) (eta : Gamma) :
     solovayLE Gamma n eta = sInf (Set.range fun m ↦ solovayC Gamma m n eta) := by
   apply le_antisymm
@@ -333,6 +393,8 @@ theorem solovayLE_eq_sInf (n : ℕ) (eta : Gamma) :
     rw [hhm] at hout
     exact (lt_irrefl eta) hout
 
+/-- Gives the fundamental Boolean identity for a Solovay generator; used to
+recover exact coordinate cylinders. -/
 theorem solovayA_eq (n : ℕ) (eta : Gamma) :
     solovayA Gamma n eta =
       solovayLE Gamma n eta ⊓ (solovayLT Gamma n eta)ᶜ := by
@@ -343,6 +405,8 @@ theorem solovayA_eq (n : ℕ) (eta : Gamma) :
   ext f
   simp [le_antisymm_iff]
 
+/-- Performs the well-founded step placing all `solovayA` elements in a
+complete subalgebra generated by the basic family. -/
 theorem solovayA_mem_of_generators [WellFoundedLT Gamma]
     (L : BooleanSubalgebra (RegularOpen (SolovayProduct Gamma)))
     (hcomplete : IsCompleteBooleanSubalgebra L)
@@ -373,6 +437,8 @@ theorem solovayA_mem_of_generators [WellFoundedLT Gamma]
       exact L.inf_mem hLE (L.compl_mem (hLT n))
 
 omit [LinearOrder Gamma] in
+/-- Splits a finite cylinder after inserting one coordinate; used for the
+induction showing all finite cylinders are generated. -/
 theorem solovayCylinder_insert (i : ℕ) (F : Finset ℕ)
     (g : SolovayProduct Gamma) :
     solovayCylinder Gamma (insert i F) g =
@@ -381,6 +447,8 @@ theorem solovayCylinder_insert (i : ℕ) (F : Finset ℕ)
   simp [solovayCylinder, solovayCylinderSet, solovayA]
 
 omit [LinearOrder Gamma] in
+/-- Places every finite Solovay cylinder in a complete subalgebra containing
+the generators; used to recover arbitrary regular open sets. -/
 theorem solovayCylinder_mem
     (L : BooleanSubalgebra (RegularOpen (SolovayProduct Gamma)))
     (hA : ∀ n eta, solovayA Gamma n eta ∈ L) :
@@ -399,6 +467,8 @@ theorem solovayCylinder_mem
       rw [solovayCylinder_insert]
       exact L.inf_mem (hA i (g i)) (ih g)
 
+/-- The basic cylinders lying below a regular open element; their supremum is
+used to reconstruct that element. -/
 def solovayCylindersBelow (U : RegularOpen (SolovayProduct Gamma)) :
     Set (RegularOpen (SolovayProduct Gamma)) :=
   {V | ∃ F g, V = solovayCylinder Gamma F g ∧
@@ -409,6 +479,8 @@ def solovayCylindersBelow (U : RegularOpen (SolovayProduct Gamma)) :
         Set (SolovayProduct Gamma)))}
 
 omit [LinearOrder Gamma] in
+/-- Represents the points of a regular open set by cylinders lying below it;
+used to express that set as a supremum of generated cylinder elements. -/
 theorem solovay_union_cylinders_below
     (U : RegularOpen (SolovayProduct Gamma)) :
     (((U : TopologicalSpace.Opens (SolovayProduct Gamma)) :
@@ -449,6 +521,8 @@ theorem solovay_union_cylinders_below
     exact hVU hxV
 
 omit [LinearOrder Gamma] in
+/-- Shows every regular open element belongs to any complete subalgebra
+containing the Solovay generators; this proves generation of the full algebra. -/
 theorem solovay_every_regularOpen_mem
     (L : BooleanSubalgebra (RegularOpen (SolovayProduct Gamma)))
     (hcomplete : IsCompleteBooleanSubalgebra L)
@@ -461,6 +535,8 @@ theorem solovay_every_regularOpen_mem
   rcases hV with ⟨F, g, rfl, hsub⟩
   exact solovayCylinder_mem Gamma L hA F g
 
+/-- Packages the preceding membership argument as complete generation of the
+regular-open Boolean algebra; used in the Gao counterexample. -/
 theorem solovay_generates_regularOpen [WellFoundedLT Gamma]
     (L : BooleanSubalgebra (RegularOpen (SolovayProduct Gamma)))
     (hcomplete : IsCompleteBooleanSubalgebra L)
@@ -471,6 +547,8 @@ theorem solovay_generates_regularOpen [WellFoundedLT Gamma]
   apply solovay_every_regularOpen_mem Gamma L hcomplete
   exact fun n eta ↦ solovayA_mem_of_generators Gamma L hcomplete hB eta n
 
+/-- Shows one coordinate layer of Solovay generators is injectively indexed;
+used for the density-character lower bound. -/
 theorem solovayA_injective (n : ℕ) : Function.Injective (solovayA Gamma n) := by
   intro eta theta h
   by_contra hne
@@ -490,13 +568,19 @@ section BooleanStone
 
 variable (B : Type u) [BooleanAlgebra B]
 
+/-- The bounded-lattice equations defining a two-valued Stone point; used to
+realize the Stone spectrum as a closed Cantor-cube subspace. -/
 def IsBooleanStonePoint (f : B → Bool) : Prop :=
   f ⊥ = ⊥ ∧ f ⊤ = ⊤ ∧
     (∀ a b, f (a ⊓ b) = f a ⊓ f b) ∧
     (∀ a b, f (a ⊔ b) = f a ⊔ f b)
 
+/-- The Stone spectrum of a Boolean algebra, represented by its two-valued
+bounded-lattice homomorphisms. -/
 abbrev BooleanStone := {f : B → Bool // IsBooleanStonePoint B f}
 
+/-- Proves that the Boolean-homomorphism equations define a closed subset of
+the Cantor cube; used to obtain compactness of the Stone spectrum. -/
 theorem isClosed_isBooleanStonePoint :
     IsClosed {f : B → Bool | IsBooleanStonePoint B f} := by
   unfold IsBooleanStonePoint
@@ -522,19 +606,29 @@ theorem isClosed_isBooleanStonePoint :
       isClosed_eq (continuous_apply (a ⊔ b))
         (show Continuous (fun f : B → Bool ↦ f a ⊔ f b) by fun_prop)
 
+/-- Compactness inherited from the closed realization inside the Cantor cube;
+used throughout the continuous-function construction. -/
 noncomputable instance booleanStoneCompactSpace : CompactSpace (BooleanStone B) :=
   isCompact_iff_compactSpace.mp (isClosed_isBooleanStonePoint B).isCompact
 
+/-- The Stone spectrum is Hausdorff as a subspace of a product of discrete
+two-point spaces. -/
 instance booleanStoneT2Space : T2Space (BooleanStone B) := inferInstance
 
+/-- The clopen set of Stone points evaluating a Boolean element to true; used
+for the faithful Stone representation. -/
 def booleanStoneClopen (b : B) : Set (BooleanStone B) :=
   {x | x.1 b = true}
 
+/-- Shows that evaluation at a Boolean element defines a clopen subset of the
+Stone spectrum; used for the clopen representation and its indicators. -/
 theorem isClopen_booleanStoneClopen (b : B) :
     IsClopen (booleanStoneClopen B b) :=
   (isClopen_discrete {true}).preimage
     ((continuous_apply b).comp continuous_subtype_val)
 
+/-- Bundles a Stone point as a bounded-lattice homomorphism; used to access
+its algebraic laws uniformly. -/
 def booleanStoneHom (x : BooleanStone B) : BoundedLatticeHom B Bool where
   toFun := x.1
   map_inf' := x.2.2.2.1
@@ -558,6 +652,8 @@ def booleanStoneHom (x : BooleanStone B) : BoundedLatticeHom B Bool where
     x.1 aᶜ = (x.1 a)ᶜ := by
   exact map_compl' (booleanStoneHom B x) a
 
+/-- Constructs the Stone point associated with a prime ideal; used to separate
+Boolean elements when an order relation fails. -/
 noncomputable def booleanStonePointOfPrime (J : Order.Ideal B)
     (hJ : Order.Ideal.IsPrime J) : BooleanStone B := by
   classical
@@ -586,6 +682,8 @@ noncomputable def booleanStonePointOfPrime (J : Order.Ideal B)
           simp [Order.Ideal.sup_mem_iff, ha]
         simp [ha, hab]⟩
 
+/-- Separates a failed Boolean inequality by a Stone point; used to prove
+faithfulness of the clopen representation. -/
 theorem exists_booleanStonePoint_of_not_le {a b : B} (hab : ¬ a ≤ b) :
     ∃ x : BooleanStone B, x.1 a = true ∧ x.1 b = false := by
   let F : Order.PFilter B := Order.PFilter.principal a
@@ -605,6 +703,8 @@ theorem exists_booleanStonePoint_of_not_le {a b : B} (hab : ¬ a ≤ b) :
   · simp [booleanStonePointOfPrime, haJ]
   · simp [booleanStonePointOfPrime, hbJ]
 
+/-- Identifies Boolean order with inclusion of the corresponding Stone
+clopens; used for injectivity and order computations. -/
 theorem booleanStoneClopen_subset_iff {a b : B} :
     booleanStoneClopen B a ⊆ booleanStoneClopen B b ↔ a ≤ b := by
   constructor
@@ -619,6 +719,8 @@ theorem booleanStoneClopen_subset_iff {a b : B} :
     rw [hxa] at hmap
     exact top_unique hmap
 
+/-- Proves injectivity of the Stone clopen representation; used to embed the
+complete Boolean algebra into continuous functions. -/
 theorem booleanStoneClopen_injective :
     Function.Injective (booleanStoneClopen B) := by
   intro a b hab
@@ -642,9 +744,13 @@ theorem booleanStoneClopen_injective :
   ext x
   simp [booleanStoneClopen]
 
+/-- Selects `b` or its complement according to a Stone coordinate; used to
+encode signed finite cylinders as Boolean elements. -/
 def booleanStoneSignedCoordinate (x : BooleanStone B) (b : B) : B :=
   if x.1 b = true then b else bᶜ
 
+/-- Evaluates membership in a signed-coordinate cylinder through its Boolean
+element; used to translate finite Cantor cylinders to Stone clopens. -/
 theorem booleanStoneClopen_signedCoordinate (x : BooleanStone B) (b : B) :
     booleanStoneClopen B (booleanStoneSignedCoordinate B x b) =
       {y | y.1 b = x.1 b} := by
@@ -653,9 +759,13 @@ theorem booleanStoneClopen_signedCoordinate (x : BooleanStone B) (b : B) :
   · simp [booleanStoneSignedCoordinate, hx, booleanStoneClopen]
   · simp [booleanStoneSignedCoordinate, hx, booleanStoneClopen]
 
+/-- The finite meet encoding the Cantor cylinder through a Stone point; used
+to produce represented clopen neighborhood bases. -/
 def booleanStoneCylinderElement (F : Finset B) (x : BooleanStone B) : B :=
   F.inf (booleanStoneSignedCoordinate B x)
 
+/-- Identifies a finite Stone-space cylinder with the clopen represented by
+its Boolean cylinder element; used to prove the clopen basis theorem. -/
 theorem booleanStoneClopen_cylinderElement (F : Finset B)
     (x : BooleanStone B) :
     booleanStoneClopen B (booleanStoneCylinderElement B F x) =
@@ -672,6 +782,8 @@ theorem booleanStoneClopen_cylinderElement (F : Finset B)
       ext y
       simp
 
+/-- Refines every neighborhood of a Stone point to a represented clopen;
+used in extremal disconnectedness and point-separation arguments. -/
 theorem booleanStone_clopen_basis {U : Set (BooleanStone B)}
     (hU : IsOpen U) {x : BooleanStone B} (hxU : x ∈ U) :
     ∃ b : B, x ∈ booleanStoneClopen B b ∧ booleanStoneClopen B b ⊆ U := by
@@ -700,6 +812,8 @@ section CompleteBooleanStone
 
 variable (B : Type u) [CompleteBooleanAlgebra B]
 
+/-- Supplies extremal disconnectedness from completeness of the Boolean
+algebra; needed for continuous suprema in `C(BooleanStone B, ℝ)`. -/
 noncomputable instance booleanStoneExtremallyDisconnected :
     ExtremallyDisconnected (BooleanStone B) where
   open_closure U hU := by
@@ -741,10 +855,14 @@ section OrderCompleteCofK
 
 variable (K : Type u) [TopologicalSpace K] [ExtremallyDisconnected K]
 
+/-- The union of strict rational upper-level sets of a function family; used
+as the raw level set for the continuous supremum. -/
 def continuousFamilyLevelOpen (A : Set C(K, ℝ)) (q : ℚ) : Set K :=
   ⋃ f ∈ A, f ⁻¹' Set.Ioi (q : ℝ)
 
 omit [ExtremallyDisconnected K] in
+/-- Shows that a rational strict upper-level set of a continuous family is
+open; used to regularize level sets in the supremum construction. -/
 theorem isOpen_continuousFamilyLevelOpen (A : Set C(K, ℝ)) (q : ℚ) :
     IsOpen (continuousFamilyLevelOpen K A q) := by
   apply isOpen_iUnion
@@ -753,23 +871,33 @@ theorem isOpen_continuousFamilyLevelOpen (A : Set C(K, ℝ)) (q : ℚ) :
   intro hf
   exact isOpen_Ioi.preimage f.continuous
 
+/-- The closure of a family level set, made clopen by extremal disconnectedness;
+used to define pointwise rational cuts. -/
 def continuousFamilyRegularizedLevel (A : Set C(K, ℝ)) (q : ℚ) : Set K :=
   closure (continuousFamilyLevelOpen K A q)
 
+/-- Uses extremal disconnectedness to make regularized family level sets
+clopen; needed to assemble a continuous supremum. -/
 theorem isClopen_continuousFamilyRegularizedLevel
     (A : Set C(K, ℝ)) (q : ℚ) :
     IsClopen (continuousFamilyRegularizedLevel K A q) :=
   ⟨isClosed_closure, ExtremallyDisconnected.open_closure _
     (isOpen_continuousFamilyLevelOpen K A q)⟩
 
+/-- Rational thresholds whose regularized level contains `x`; their supremum
+defines the candidate least upper bound. -/
 def continuousFamilyCutValues (A : Set C(K, ℝ)) (x : K) : Set ℝ :=
   ((fun q : ℚ ↦ (q : ℝ)) ''
     {q | x ∈ continuousFamilyRegularizedLevel K A q})
 
+/-- The real supremum of the rational cut values at a point; later shown
+continuous and bundled as `continuousFamilySup`. -/
 noncomputable def continuousFamilySupValue (A : Set C(K, ℝ)) (x : K) : ℝ :=
   sSup (continuousFamilyCutValues K A x)
 
 omit [ExtremallyDisconnected K] in
+/-- Shows that regularized upper-level sets decrease with the threshold; used
+to prove consistency of the cut-value construction. -/
 theorem continuousFamilyRegularizedLevel_antitone (A : Set C(K, ℝ)) :
     Antitone (continuousFamilyRegularizedLevel K A) := by
   intro q r hqr
@@ -781,6 +909,8 @@ theorem continuousFamilyRegularizedLevel_antitone (A : Set C(K, ℝ)) :
   exact ⟨f, hfA, (Rat.cast_le.mpr hqr).trans_lt hrfx⟩
 
 omit [ExtremallyDisconnected K] in
+/-- Supplies rational cut values at each point for a nonempty family; needed
+to define the pointwise cut supremum. -/
 theorem continuousFamilyCutValues_nonempty {A : Set C(K, ℝ)}
     (hA : A.Nonempty) (x : K) : (continuousFamilyCutValues K A x).Nonempty := by
   rcases hA with ⟨f, hfA⟩
@@ -792,6 +922,8 @@ theorem continuousFamilyCutValues_nonempty {A : Set C(K, ℝ)}
   exact ⟨f, hfA, hq⟩
 
 omit [ExtremallyDisconnected K] in
+/-- Bounds the rational cut values using a common upper bound of the family;
+used to make their real supremum well-defined. -/
 theorem continuousFamilyCutValues_bddAbove {A : Set C(K, ℝ)}
     {h : C(K, ℝ)} (hh : h ∈ upperBounds A) (x : K) :
     BddAbove (continuousFamilyCutValues K A x) := by
@@ -809,6 +941,8 @@ theorem continuousFamilyCutValues_bddAbove {A : Set C(K, ℝ)}
   exact (closure_minimal hopen_le hclosed hxq)
 
 omit [ExtremallyDisconnected K] in
+/-- Bounds every cut value by any continuous upper bound of the family; used
+to prove minimality of the constructed supremum. -/
 theorem continuousFamilyCutValue_le_upperBound {A : Set C(K, ℝ)}
     (hA : A.Nonempty) {h : C(K, ℝ)} (hh : h ∈ upperBounds A) (x : K) :
     continuousFamilySupValue K A x ≤ h x := by
@@ -823,6 +957,8 @@ theorem continuousFamilyCutValue_le_upperBound {A : Set C(K, ℝ)}
     exact le_of_lt (hqf.trans_le (hh hfA y))
   exact closure_minimal hopen_le (isClosed_Ici.preimage h.continuous) hxq
 
+/-- Proves continuity of the cut-defined supremum value; this allows it to be
+bundled as `continuousFamilySup`. -/
 theorem continuous_continuousFamilySupValue {A : Set C(K, ℝ)}
     (hA : A.Nonempty) (hAbdd : BddAbove A) :
     Continuous (continuousFamilySupValue K A) := by
@@ -885,11 +1021,15 @@ theorem continuous_continuousFamilySupValue {A : Set C(K, ℝ)}
     intro hqa
     exact (isClopen_continuousFamilyRegularizedLevel K A q).1.isOpen_compl
 
+/-- Bundles the cut-defined pointwise supremum as a continuous function; used
+to prove order completeness of the continuous-function lattice. -/
 noncomputable def continuousFamilySup (A : Set C(K, ℝ))
     (hA : A.Nonempty) (hAbdd : BddAbove A) : C(K, ℝ) :=
   ⟨continuousFamilySupValue K A,
     continuous_continuousFamilySupValue K hA hAbdd⟩
 
+/-- Verifies that the constructed continuous function is the least upper bound
+of the family; used to prove order completeness of `C(K, ℝ)`. -/
 theorem continuousFamilySup_isLUB (A : Set C(K, ℝ))
     (hA : A.Nonempty) (hAbdd : BddAbove A) :
     IsLUB A (continuousFamilySup K A hA hAbdd) := by
@@ -912,6 +1052,8 @@ theorem continuousFamilySup_isLUB (A : Set C(K, ℝ))
   · intro k hk x
     exact continuousFamilyCutValue_le_upperBound K hA hk x
 
+/-- Packages the continuous-family supremum construction as order completeness
+of continuous real functions on an extremally disconnected compact space. -/
 theorem isOrderComplete_continuousMap : IsOrderComplete C(K, ℝ) := by
   intro A hA hAbdd
   exact ⟨continuousFamilySup K A hA hAbdd,
@@ -923,6 +1065,8 @@ section ClopenIndicators
 
 variable (K : Type u) [TopologicalSpace K]
 
+/-- The continuous zero-one indicator of a clopen set; used to embed Boolean
+clopens into the vector lattice of continuous functions. -/
 noncomputable def clopenIndicator (s : Set K) (hs : IsClopen s) : C(K, ℝ) where
   toFun := s.indicator 1
   continuous_toFun :=
@@ -941,6 +1085,8 @@ noncomputable def clopenIndicator (s : Set K) (hs : IsClopen s) : C(K, ℝ) wher
   ext x
   simp [clopenIndicator]
 
+/-- Computes the infimum of two clopen indicators; used to make Boolean
+indicators compatible with lattice operations. -/
 theorem clopenIndicator_inter (s t : Set K) (hs : IsClopen s) (ht : IsClopen t) :
     clopenIndicator K (s ∩ t) (hs.inter ht) =
       clopenIndicator K s hs ⊓ clopenIndicator K t ht := by
@@ -948,6 +1094,8 @@ theorem clopenIndicator_inter (s t : Set K) (hs : IsClopen s) (ht : IsClopen t) 
   by_cases hxs : x ∈ s <;> by_cases hxt : x ∈ t <;>
     simp [clopenIndicator, hxs, hxt]
 
+/-- Computes the supremum of two clopen indicators; used in the Boolean-to-
+vector-sublattice transfer. -/
 theorem clopenIndicator_union (s t : Set K) (hs : IsClopen s) (ht : IsClopen t) :
     clopenIndicator K (s ∪ t) (hs.union ht) =
       clopenIndicator K s hs ⊔ clopenIndicator K t ht := by
@@ -955,6 +1103,8 @@ theorem clopenIndicator_union (s t : Set K) (hs : IsClopen s) (ht : IsClopen t) 
   by_cases hxs : x ∈ s <;> by_cases hxt : x ∈ t <;>
     simp [clopenIndicator, hxs, hxt]
 
+/-- Computes the indicator of a clopen complement; used to recover Boolean
+complements inside a vector sublattice. -/
 theorem clopenIndicator_compl (s : Set K) (hs : IsClopen s) :
     clopenIndicator K sᶜ hs.compl = 1 - clopenIndicator K s hs := by
   ext x
@@ -966,6 +1116,8 @@ section BooleanStoneIndicators
 
 variable (B : Type u) [CompleteBooleanAlgebra B]
 
+/-- The continuous indicator associated with a Boolean element under Stone
+duality; used as the Boolean generator inside the vector lattice. -/
 noncomputable def booleanStoneIndicator (b : B) : C(BooleanStone B, ℝ) :=
   clopenIndicator (BooleanStone B) (booleanStoneClopen B b)
     (isClopen_booleanStoneClopen B b)
@@ -999,6 +1151,8 @@ noncomputable def booleanStoneIndicator (b : B) : C(BooleanStone B, ℝ) :=
   ext x
   by_cases ha : x.1 a = true <;> simp [booleanStoneIndicator_apply, ha]
 
+/-- Shows that arbitrary Boolean suprema correspond to closures of unions of
+Stone clopens; used to transfer completeness into vector sublattices. -/
 theorem booleanStoneClopen_sSup (S : Set B) :
     booleanStoneClopen B (sSup S) =
       closure (⋃ b ∈ S, booleanStoneClopen B b) := by
@@ -1031,6 +1185,8 @@ theorem booleanStoneClopen_sSup (S : Set B) :
       exact (booleanStoneClopen_subset_iff B).mpr (le_sSup hbS) hxb
     · exact (isClopen_booleanStoneClopen B (sSup S)).1
 
+/-- Transfers Boolean order to order between indicator functions; used in
+order-convergence and sublattice generation arguments. -/
 theorem booleanStoneIndicator_mono {a b : B} (hab : a ≤ b) :
     booleanStoneIndicator B a ≤ booleanStoneIndicator B b := by
   intro x
@@ -1043,12 +1199,16 @@ theorem booleanStoneIndicator_mono {a b : B} (hab : a ≤ b) :
         simp [booleanStoneIndicator, hxb]
     simpa [booleanStoneIndicator, hxa] using hnonneg
 
+/-- Records positivity of Boolean Stone indicators; used when constructing
+monotone order-convergent families. -/
 theorem booleanStoneIndicator_nonneg (a : B) :
     (0 : C(BooleanStone B, ℝ)) ≤ booleanStoneIndicator B a := by
   intro x
   by_cases hxa : x ∈ booleanStoneClopen B a <;>
     simp [booleanStoneIndicator, hxa]
 
+/-- Boolean elements whose Stone indicators lie in a fixed vector sublattice;
+used to transfer complete Boolean generation to vector-lattice generation. -/
 noncomputable def booleanSubalgebraInVectorSublattice
     (Z : VectorSublattice C(BooleanStone B, ℝ))
     (hOne : (1 : C(BooleanStone B, ℝ)) ∈ Z) : BooleanSubalgebra B where
@@ -1078,6 +1238,8 @@ noncomputable def booleanSubalgebraInVectorSublattice
     rw [booleanStoneIndicator_bot]
     exact Z.zero_mem
 
+/-- Shows that Boolean elements whose indicators lie in a vector sublattice
+form a complete Boolean subalgebra; used with Solovay generation for maximality. -/
 theorem booleanSubalgebraInVectorSublattice_complete
     (Z : VectorSublattice C(BooleanStone B, ℝ))
     (hOne : (1 : C(BooleanStone B, ℝ)) ∈ Z)
@@ -1164,6 +1326,8 @@ section ClosedOrderSublattices
 
 variable {K : Type u} [TopologicalSpace K] [CompactSpace K]
 
+/-- Converts uniform convergence with a summable error bound into order
+convergence; used to show order-closed sublattices are norm closed. -/
 theorem continuousMap_orderConvergesTo_of_tendsto
     {ι : Type v} [Preorder ι] {f : ι → C(K, ℝ)} {x : C(K, ℝ)}
     (hfx : Filter.Tendsto f Filter.atTop (nhds x)) :
@@ -1224,6 +1388,8 @@ theorem continuousMap_orderConvergesTo_of_tendsto
     _ ≤ (((k.down : ℝ) + 1)⁻¹) := hnorm.le
     _ = r' k y := by simp [r', r]
 
+/-- Derives norm closedness of a vector sublattice from order closedness; used
+to compare the closed separable sublattice with larger order-closed ones. -/
 theorem isClosed_of_isOrderClosed_vectorSublattice
     (Z : VectorSublattice C(K, ℝ))
     (hZ : IsOrderClosed (Z : Set C(K, ℝ))) :
@@ -1249,6 +1415,8 @@ section BooleanIndicatorsGenerate
 
 variable (B : Type u) [CompleteBooleanAlgebra B]
 
+/-- Produces a Boolean indicator separating two distinct Stone points; used
+in the lattice Stone--Weierstrass argument. -/
 theorem booleanStoneIndicators_separateStrongly
     (Z : VectorSublattice C(BooleanStone B, ℝ))
     (hOne : (1 : C(BooleanStone B, ℝ)) ∈ Z)
@@ -1282,6 +1450,8 @@ theorem booleanStoneIndicators_separateStrongly
       · simp [g, booleanStoneIndicator_apply, hyb]
     · exact False.elim (hb (by simp [hxb, hyb]))
 
+/-- Shows that a closed vector sublattice containing every Boolean indicator
+is all of `C(K, ℝ)`; used to prove maximality of the Solovay sublattice. -/
 theorem vectorSublattice_eq_top_of_booleanStoneIndicators
     (Z : VectorSublattice C(BooleanStone B, ℝ))
     (hOne : (1 : C(BooleanStone B, ℝ)) ∈ Z)
@@ -1309,6 +1479,8 @@ end BooleanIndicatorsGenerate
 
 section DensityCharacter
 
+/-- Bounds density character below by the cardinality of a one-separated
+family; used for the Stone-space continuous-function density estimate. -/
 theorem cardinalMk_le_densityCharacter_of_oneSeparated
     {A : Type u} {X : Type u} [PseudoMetricSpace X]
     (e : A → X) (hsep : ∀ a b, a ≠ b → (1 : ℝ) ≤ dist (e a) (e b)) :
@@ -1336,6 +1508,8 @@ theorem cardinalMk_le_densityCharacter_of_oneSeparated
         _ < 1 := by norm_num
     exact (not_lt_of_ge hone) hlt
 
+/-- Shows distinct Boolean elements give indicators at distance at least one;
+used to obtain a large separated family. -/
 theorem one_le_dist_booleanStoneIndicator
     (B : Type u) [CompleteBooleanAlgebra B] {a b : B} (hab : a ≠ b) :
     (1 : ℝ) ≤ dist (booleanStoneIndicator B a) (booleanStoneIndicator B b) := by
@@ -1355,6 +1529,8 @@ theorem one_le_dist_booleanStoneIndicator
       _ ≤ ‖booleanStoneIndicator B a - booleanStoneIndicator B b‖ :=
         ContinuousMap.norm_coe_le_norm _ _
 
+/-- Transfers the size of a Boolean algebra to a lower bound on the density
+character of its continuous-function lattice. -/
 theorem cardinalMk_le_densityCharacter_booleanStoneContinuousMap
     (B : Type u) [CompleteBooleanAlgebra B] :
     Cardinal.mk B ≤ densityCharacter C(BooleanStone B, ℝ) :=
@@ -1368,23 +1544,31 @@ section SolovayVectorSublattice
 variable (Gamma : Type u) [LinearOrder Gamma] [WellFoundedLT Gamma]
   [TopologicalSpace Gamma] [DiscreteTopology Gamma]
 
+/-- A countable selection of Boolean Stone indicators generating the Solovay
+vector sublattice used in the Gao counterexample. -/
 noncomputable def solovayVectorGenerators :
     Set C(BooleanStone (RegularOpen (SolovayProduct Gamma)), ℝ) :=
   Set.range (fun p : ℕ × ℕ ↦
     booleanStoneIndicator (RegularOpen (SolovayProduct Gamma))
       (solovayB Gamma p.1 p.2)) ∪ {1}
 
+/-- The closed vector sublattice generated by the selected Solovay indicators;
+this is the separable maximal order-closed witness. -/
 noncomputable def solovayVectorSublattice :
     VectorSublattice C(BooleanStone (RegularOpen (SolovayProduct Gamma)), ℝ) :=
   VectorSublattice.topologicalClosure
     (VectorSublattice.generated (solovayVectorGenerators Gamma))
 
 omit [WellFoundedLT Gamma] in
+/-- Records countability of the selected vector generators; used to prove
+separability of their closed generated sublattice. -/
 theorem solovayVectorGenerators_countable :
     (solovayVectorGenerators Gamma).Countable := by
   exact Set.countable_range _ |>.union (Set.countable_singleton _)
 
 omit [WellFoundedLT Gamma] in
+/-- Places each selected generator in the Solovay vector sublattice; used to
+show that any containing sublattice contains the generated Boolean algebra. -/
 theorem solovayVectorGenerator_mem
     {f : C(BooleanStone (RegularOpen (SolovayProduct Gamma)), ℝ)}
     (hf : f ∈ solovayVectorGenerators Gamma) :
@@ -1395,6 +1579,8 @@ theorem solovayVectorGenerator_mem
         (VectorSublattice.subset_generated (solovayVectorGenerators Gamma) hf)
 
 omit [WellFoundedLT Gamma] in
+/-- Records closedness of the generated Solovay vector sublattice; this is one
+of the properties required by `gao_counterexample`. -/
 theorem isClosed_solovayVectorSublattice :
     IsClosed (solovayVectorSublattice Gamma :
       Set C(BooleanStone (RegularOpen (SolovayProduct Gamma)), ℝ)) := by
@@ -1402,6 +1588,8 @@ theorem isClosed_solovayVectorSublattice :
   exact Submodule.isClosed_topologicalClosure _
 
 omit [WellFoundedLT Gamma] in
+/-- Derives separability from the countable generator family; this supplies
+the separable sublattice in `gao_counterexample`. -/
 theorem isSeparable_solovayVectorSublattice :
     TopologicalSpace.IsSeparable (solovayVectorSublattice Gamma :
       Set C(BooleanStone (RegularOpen (SolovayProduct Gamma)), ℝ)) := by
@@ -1413,6 +1601,8 @@ theorem isSeparable_solovayVectorSublattice :
     (solovayVectorSublattice Gamma :
       Set C(BooleanStone (RegularOpen (SolovayProduct Gamma)), ℝ))
 
+/-- Shows that every order-closed vector sublattice containing the Solovay
+sublattice is the whole continuous-function lattice. -/
 theorem solovayVectorSublattice_maximalOrderClosed
     (Z : VectorSublattice
       C(BooleanStone (RegularOpen (SolovayProduct Gamma)), ℝ))

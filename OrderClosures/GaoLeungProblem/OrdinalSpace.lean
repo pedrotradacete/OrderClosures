@@ -30,6 +30,8 @@ noncomputable def ordinalProjection (ξ : Ordinal.{u}) (ζ : GaoIndex ξ) :
       Continuous (fun b : Bool ↦ if b then (1 : ℝ) else 0)).comp
         ((continuous_apply ζ).comp continuous_subtype_val)
 
+/-- Extracts finitely many Cantor-cube coordinates controlling a continuous
+real map; used to prove the incomparable-projection infimum formula. -/
 theorem continuousMap_exists_finite_coordinates
     {I : Type u} {K : Set (I → Bool)} (f : C(K, ℝ)) (x : K)
     {V : Set ℝ} (hV : IsOpen V) (hxV : f x ∈ V) :
@@ -64,6 +66,8 @@ def GaoStageIndices (ξ β : Ordinal.{u}) : Set (GaoIndex ξ) :=
 def GaoStageSet (ξ β : Ordinal.{u}) : Set C(GaoCompactSpace ξ, ℝ) :=
   {f | ∃ ζ ∈ GaoStageIndices ξ β, |f| ≤ ordinalProjection ξ ζ}
 
+/-- Records solidity of each Gao stage set; used to invoke the solid form of
+order adherence in the stage formula. -/
 theorem isSolid_gaoStageSet (ξ β : Ordinal.{u}) :
     LatticeOrderedAddCommGroup.IsSolid (GaoStageSet ξ β) := by
   intro f hf g hgf
@@ -148,6 +152,8 @@ theorem ordinalProjection_incomparable_iInf
     simp only [ordinalProjection, hyζ, Bool.false_eq_true, ↓reduceIte] at hfζ
     exact not_lt_of_ge hfζ hfy
 
+/-- Characterizes order between coordinate projections by CNF extension;
+used in all dominator and strict-stage arguments. -/
 theorem ordinalProjection_le_iff
     (ξ : Ordinal.{u}) (a b : GaoIndex ξ) :
     ordinalProjection ξ a ≤ ordinalProjection ξ b ↔ cnfExtensionLE a.1 b.1 := by
@@ -192,10 +198,14 @@ theorem ordinalProjection_le_iff
       · simp only [hxa]
         positivity
 
+/-- The leading monomial of an ordinal's canonical normal form; isolated for
+the singleton-chain supremum analysis. -/
 noncomputable def leadingCNFTerm (a : Ordinal.{u}) : Ordinal.{u} :=
   Ordinal.omega0 ^ Ordinal.log Ordinal.omega0 a *
     (a / Ordinal.omega0 ^ Ordinal.log Ordinal.omega0 a)
 
+/-- Bounds a singleton CNF monomial by the leading term of an ordinal; used
+to identify possible upper bounds of singleton chains. -/
 theorem cnf_singleton_le_leadingCNFTerm
     {q a γ d : Ordinal.{u}}
     (hq : Ordinal.CNF Ordinal.omega0 q = [(γ, d)]) (hqa : q ≤ a) :
@@ -238,6 +248,8 @@ theorem cnf_singleton_le_leadingCNFTerm
       exact Ordinal.le_mul_left _
         (Ordinal.div_opow_log_pos Ordinal.omega0 ha0))
 
+/-- Gives the canonical CNF description of a singleton omega monomial; used
+to translate singleton-chain inequalities into exponent inequalities. -/
 theorem cnf_singleton_spec
     {q γ d : Ordinal.{u}}
     (hq : Ordinal.CNF Ordinal.omega0 q = [(γ, d)]) :
@@ -259,6 +271,8 @@ theorem cnf_singleton_spec
   rw [hqeq, Ordinal.log_opow_mul Ordinal.one_lt_omega0 γ hdpos.ne',
     Ordinal.log_eq_zero hdlt, add_zero]
 
+/-- Shows that the least upper bound of a nonempty singleton-monomial chain is
+itself a singleton monomial; used in the chain-supremum analysis. -/
 theorem cnf_eq_singleton_of_isLUB
     (Q : Set (Ordinal.{u})) (a : Ordinal.{u}) (hQ : Q.Nonempty)
     (hsingle : ∀ q ∈ Q, ∃ γ d, Ordinal.CNF Ordinal.omega0 q = [(γ, d)])
@@ -298,6 +312,8 @@ theorem cnf_eq_singleton_of_isLUB
     a / Ordinal.omega0 ^ Ordinal.log Ordinal.omega0 a, ?_⟩
   rw [Ordinal.CNF.ne_zero ha0, hmod, Ordinal.CNF.zero_right]
 
+/-- Makes the exponent of a nonattained singleton-chain supremum strictly
+larger than every member exponent; used at the limit case of the CNF chain. -/
 theorem cnf_singleton_exponent_lt_of_isLUB_not_mem
     (Q : Set (Ordinal.{u})) (a : Ordinal.{u})
     (hsingle : ∀ q ∈ Q, ∃ γ d, Ordinal.CNF Ordinal.omega0 q = [(γ, d)])
@@ -378,6 +394,8 @@ theorem cnf_singleton_exponent_lt_of_isLUB_not_mem
       (Ordinal.opow_pos γ Ordinal.omega0_pos)
   exact (not_le_of_gt hba) hab
 
+/-- Identifies an equal-length CNF extension as deletion of the last source
+term; used to analyze stabilization in chains of extensions. -/
 theorem CNFListLT.eq_dropLast_of_length_eq
     {l m : List (Ordinal.{u} × Ordinal.{u})}
     (h : CNFListLT l m) (hlen : m.length = l.length) :
@@ -395,6 +413,8 @@ theorem CNFListLT.eq_dropLast_of_length_eq
   exact ⟨x, y, by simp [hl], by simpa [hdrop] using hm,
     by simpa [hdrop] using hstep⟩
 
+/-- Proves that the ordinary supremum of a nonempty extension chain remains
+above every member in `cnfExtensionLE`; used by `ordinalProjection_chain_iSup`. -/
 theorem cnfExtensionLE_chain_lub
     (ξ : Ordinal.{u}) (Z : Set (GaoIndex ξ)) (α : GaoIndex ξ)
     (hchain : ∀ ⦃ζ⦄, ζ ∈ Z → ∀ ⦃ζ'⦄, ζ' ∈ Z →
@@ -583,6 +603,8 @@ theorem cnfExtensionLE_chain_lub
   exact cnfExtensionLE_partialOrder_and_subrelation.1.trans
     ζ.1 η₀.1 α.1 (Or.inr hζη₀) (Or.inr hη₀α)
 
+/-- Controls the least CNF exponent of a chain supremum; used to keep the
+supremum projection inside the required Gao stage. -/
 theorem leastCNFExponent_chain_lub_le
     (ξ γ : Ordinal.{u}) (Z : Set (GaoIndex ξ)) (α : GaoIndex ξ)
     (hne : Z.Nonempty)

@@ -73,6 +73,8 @@ theorem tree_thinning
     have hilast := le_lastBandOccurrence n w B hBfinite hi
     omega
 
+/-- Shows that a tree operator vanishes outside the union of cylinders in its
+support; used by `tree_transient` to eliminate common positive lower bounds. -/
 theorem treeOperator_apply_eq_zero_of_outside_support
     (n : ℕ) (w : TreeCoefficients n) {α : TreeProduct n}
     (hα : α ∉ finiteCylinderUnion n w.support) :
