@@ -2,7 +2,7 @@
 
 Lean formalization of *Order closure, order adherence and Fatou norms* by
 A. Avilés, M. A. Taylor, and P. Tradacete. The mathematical source is in
-[`paper.tex`](paper.tex), with bibliography in [`refs.bib`](refs.bib).
+[`paper.pdf`](paper.pdf).
 
 The project is built on [Mathlib](https://github.com/leanprover-community/mathlib4) and
 [BanLat](https://github.com/davidmunozlahoz/banlat), a Lean library for vector and
