@@ -23,16 +23,27 @@ directly builds the dependencies from source.
 
 ## Formalization layout
 
-- `OrderClosures/OrderAdherence.lean`: shared order-adherence definitions and lemmas.
-- `OrderClosures/GaoLeungProblem.lean`: compatibility umbrella for the
-  Gao--Leung development. Its paper-ordered implementation is split into
-  `Counterexample`, `CNFOrder`, `OrdinalSpace`, `StageFormula`, and
-  `Iterations` under `OrderClosures/GaoLeungProblem/`.
-- `OrderClosures/WeaklyFatou.lean`: compatibility umbrella for the weakly
-  Fatou construction. Its paper-ordered implementation is split into
-  `Reductions`, `FiniteTree`, `TreeNorm`, `Bands`, `Moderated`, and
-  `FinalSpace` under `OrderClosures/WeaklyFatou/`.
-- `OrderClosures.lean`: the root import for the complete development.
+- [`OrderClosures/OrderAdherence.lean`](OrderClosures/OrderAdherence.lean):
+  shared definitions and general lemmas about order adherence, solidity, and
+  the norm properties used throughout the project.
+- [`OrderClosures/GaoLeungCharacterization.lean`](OrderClosures/GaoLeungCharacterization.lean):
+  formalization of Gao--Leung Theorem 2.7, characterizing order-continuous
+  Banach lattice norms through order and unbounded-order adherence of
+  sublattices.
+- [`OrderClosures/Solovay.lean`](OrderClosures/Solovay.lean): Solovay's
+  complete Boolean-algebra construction, its realization by a Stone space,
+  and the analytic ingredients used to obtain the Gao--Leung counterexample.
+- [`OrderClosures/GaoLeungProblem.lean`](OrderClosures/GaoLeungProblem.lean):
+  compatibility umbrella for the Gao--Leung development. Its paper-ordered
+  implementation is split into `Counterexample`, `CNFOrder`, `OrdinalSpace`,
+  `StageFormula`, and `Iterations` under `OrderClosures/GaoLeungProblem/`.
+- [`OrderClosures/WeaklyFatou.lean`](OrderClosures/WeaklyFatou.lean):
+  compatibility umbrella for the weakly Fatou construction. Its paper-ordered
+  implementation is split into `Reductions`, `FiniteTree`, `TreeNorm`,
+  `Bands`, `Moderated`, and `FinalSpace` under
+  `OrderClosures/WeaklyFatou/`.
+- [`OrderClosures.lean`](OrderClosures.lean): the root import for the complete
+  development.
 
 The project contains checked proofs of the formalized results and follows the
 presentation order of the paper.
