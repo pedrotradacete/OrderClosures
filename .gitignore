@@ -18,7 +18,12 @@
 *.log
 *.out
 *.pdf
+!/paper.pdf
 *.synctex.gz
+
+# Local paper sources
+/paper.tex
+/refs.bib
 
 # Editor and operating-system files
 .DS_Store
