@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: >-
+  If you use this formalization, please cite both the accompanying paper and
+  the software using the metadata in this file.
+title: "OrderClosures"
+abstract: >-
+  Lean 4 formalization accompanying the paper "Order closure, order adherence
+  and Fatou norms".
+type: software
+version: 0.1.0
+authors:
+  - family-names: "Avilés"
+    given-names: "A."
+    affiliation: "Universidad de Murcia"
+    email: "avileslo@um.es"
+  - family-names: "Taylor"
+    given-names: "M. A."
+    affiliation: "ETH Zürich"
+    email: "mitchell.taylor@math.ethz.ch"
+  - family-names: "Tradacete"
+    given-names: "P."
+    affiliation: "Instituto de Ciencias Matemáticas (CSIC-UAM-UC3M-UCM)"
+    email: "pedro.tradacete@icmat.es"
+repository-code: "https://github.com/pedrotradacete/OrderClosures"
+license: Apache-2.0
+keywords:
+  - "Banach lattices"
+  - "order adherence"
+  - "order convergence"
+  - "unbounded-order convergence"
+  - "Fatou norms"
+  - "Lean"
+preferred-citation:
+  type: article
+  title: "Order closure, order adherence and Fatou norms"
+  authors:
+    - family-names: "Avilés"
+      given-names: "A."
+    - family-names: "Taylor"
+      given-names: "M. A."
+    - family-names: "Tradacete"
+      given-names: "P."
+  # Add the DOI once assigned:
+  # doi: "10.xxxx/xxxxx"
+  # Add the arXiv identifier once available:
+  # identifiers:
+  #   - type: other
+  #     value: "arXiv:xxxx.xxxxx"

@@ -21,9 +21,9 @@
 !/paper.pdf
 *.synctex.gz
 
-# Local paper sources
-/paper.tex
-/refs.bib
+# Local manuscript sources
+/*.tex
+/*.bib
 
 # Editor and operating-system files
 .DS_Store

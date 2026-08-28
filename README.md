@@ -1,25 +1,45 @@
-# OrderClosures
+# Order closure, order adherence and Fatou norms
 
-Lean formalization of *Order closure, order adherence and Fatou norms* by
-A. Avilés, M. A. Taylor, and P. Tradacete. The mathematical source is in
-[`paper.pdf`](paper.pdf).
+[![Lean CI](https://github.com/pedrotradacete/OrderClosures/actions/workflows/lean.yml/badge.svg)](https://github.com/pedrotradacete/OrderClosures/actions/workflows/lean.yml)
 
-The project is built on [Mathlib](https://github.com/leanprover-community/mathlib4) and
-[BanLat](https://github.com/davidmunozlahoz/banlat), a Lean library for vector and
-Banach lattices. BanLat is pinned to commit
-`b00e59836016aa1099b8011add6b07385e66428e`, which uses Lean and Mathlib `v4.30.0`.
+This repository contains the Lean 4 formalization accompanying the paper
+*Order closure, order adherence and Fatou norms* by A. Avilés, M. A. Taylor,
+and P. Tradacete. A copy of the manuscript is available as
+[`paper.pdf`](paper.pdf), and [`FORMALIZATION.md`](FORMALIZATION.md) gives a
+detailed correspondence between the paper and the Lean development.
 
-## Build
+The formalization is built on
+[Mathlib](https://github.com/leanprover-community/mathlib4) and
+[BanLat](https://github.com/davidmunozlahoz/banlat), a Lean library for vector
+and Banach lattices. The exact dependency revisions are recorded in
+[`lake-manifest.json`](lake-manifest.json).
 
-Install [elan](https://github.com/leanprover/elan), then run:
+## Main results
+
+The repository formalizes:
+
+- the Gao--Leung characterization of order-continuous Banach lattice norms;
+- counterexamples concerning order and unbounded-order adherence, including
+  solid sets requiring arbitrarily many adherence iterations; and
+- a weakly Fatou Banach lattice norm that is not equivalent to any Fatou
+  lattice norm.
+
+All declarations in the project have checked proofs; the Lean sources contain
+no `sorry` or `admit` placeholders.
+
+## Building
+
+Install [elan](https://github.com/leanprover/elan), clone this repository, and
+run from its root:
 
 ```bash
 lake exe cache get
 lake build
 ```
 
-If the optional cache downloader is unavailable on a platform, running `lake build`
-directly builds the dependencies from source.
+The first command downloads available precompiled Mathlib artifacts. If the
+cache downloader is unavailable on a platform, `lake build` builds the
+dependencies from source.
 
 ## Formalization layout
 
@@ -34,16 +54,26 @@ directly builds the dependencies from source.
   complete Boolean-algebra construction, its realization by a Stone space,
   and the analytic ingredients used to obtain the Gao--Leung counterexample.
 - [`OrderClosures/GaoLeungProblem.lean`](OrderClosures/GaoLeungProblem.lean):
-  compatibility umbrella for the Gao--Leung development. Its paper-ordered
+  umbrella module for the Gao--Leung development. Its paper-ordered
   implementation is split into `Counterexample`, `CNFOrder`, `OrdinalSpace`,
   `StageFormula`, and `Iterations` under `OrderClosures/GaoLeungProblem/`.
 - [`OrderClosures/WeaklyFatou.lean`](OrderClosures/WeaklyFatou.lean):
-  compatibility umbrella for the weakly Fatou construction. Its paper-ordered
+  umbrella module for the weakly Fatou construction. Its paper-ordered
   implementation is split into `Reductions`, `FiniteTree`, `TreeNorm`,
   `Bands`, `Moderated`, and `FinalSpace` under
   `OrderClosures/WeaklyFatou/`.
 - [`OrderClosures.lean`](OrderClosures.lean): the root import for the complete
   development.
 
-The project contains checked proofs of the formalized results and follows the
-presentation order of the paper.
+## Citation
+
+If you use this formalization, please cite both the accompanying paper and the
+software. Machine-readable citation metadata is provided in
+[`CITATION.cff`](CITATION.cff); the DOI and arXiv identifier will be added when
+they become available.
+
+## License
+
+The Lean source code and project configuration are licensed under the
+[Apache License 2.0](LICENSE). The included [`paper.pdf`](paper.pdf) is not
+covered by this software license and retains its authors' copyright.
