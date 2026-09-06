@@ -21,6 +21,9 @@
 !/paper.pdf
 *.synctex.gz
 
+# Local conference presentation (source, PDF, and auxiliaries)
+/slides.*
+
 # Local manuscript sources
 /*.tex
 /*.bib
